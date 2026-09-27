@@ -47,6 +47,7 @@ import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
 import com.example.marketcalculator.data.formatPersen
+import com.example.marketcalculator.ui.theme.tabularNums
 import com.example.marketcalculator.ui.util.ThousandsSeparatorTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -345,7 +346,7 @@ private fun HargaJualForm(
                 }
             },
             shape = RoundedCornerShape(12.dp),
-            textStyle = MaterialTheme.typography.titleMedium,
+            textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -456,7 +457,7 @@ private fun RupiahField(
         singleLine = true,
         visualTransformation = ThousandsSeparatorTransformation(),
         shape = RoundedCornerShape(12.dp),
-        textStyle = MaterialTheme.typography.titleMedium,
+        textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -616,7 +617,7 @@ private fun PromoXtraRow(
                 suffix = { Text("%") },
                 singleLine = true,
                 shape = RoundedCornerShape(10.dp),
-                textStyle = MaterialTheme.typography.bodyMedium,
+                textStyle = MaterialTheme.typography.bodyMedium.tabularNums(),
                 modifier = Modifier.width(96.dp)
             )
             Spacer(Modifier.width(8.dp))
@@ -838,7 +839,7 @@ private fun NilaiPanel(
             Spacer(Modifier.height(6.dp))
             Text(
                 nilai,
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.displayLarge.tabularNums(),
                 color = warna,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
@@ -888,7 +889,7 @@ private fun PenghasilanPanel(penghasilan: Long) {
             Spacer(Modifier.height(6.dp))
             Text(
                 formatRupiah(penghasilan),
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.displayLarge.tabularNums(),
                 color = warna,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
@@ -937,7 +938,7 @@ private fun DetailRow(
         }
         Text(
             formatRupiahDenganTanda(amount),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.tabularNums(),
             color = color.copy(alpha = 0.85f),
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
