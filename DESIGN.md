@@ -78,10 +78,11 @@ components:
 
 ## Overview
 
-Aplikasi kalkulator Android (Jetpack Compose, Material 3), **dark-only**,
-memakai palet netral ala GitHub-dark dengan satu aksen hangat (amber/orange)
-plus hijau untuk angka profit. Cakupan: satu layar (single screen), form di
-atas, ringkasan hasil di bawah, scroll vertikal.
+Aplikasi kalkulator Android (Jetpack Compose, Material 3), **light + dark**
+(mengikuti sistem) dengan opsi **Dynamic Color** (Material You). Palet brand:
+netral ala GitHub dengan satu aksen hangat (amber/orange) plus hijau untuk
+angka profit. Cakupan: satu layar (single screen), form di atas, ringkasan
+hasil + panel riwayat di bawah, scroll vertikal.
 
 Mode surface: **Operate** — pengguna menyelesaikan tugas (menghitung), jadi
 keterbacaan, konsistensi, dan kepadatan informasi diutamakan di atas ekspresi.
@@ -149,11 +150,8 @@ Type scale Material 3 lengkap (`Type.kt`), ukuran dalam `sp`:
 - Satu aksen (primary) per layar; hijau khusus profit; merah khusus potongan.
 - Pertahankan format Rupiah dan real-time calculation.
 
-**Don't (calon perbaikan — akan dirapikan):**
-- **Gradient** dipakai di 4 tempat; baseline UI menyarankan hindari gradient
-  dekoratif. → ganti surface tonal solid.
-- **Card-in-card**: kotak bergradasi bersarang di dalam Card. → ratakan.
-- **Eyebrow/kicker** uppercase ("RINCIAN POTONGAN", dst) di atas konten.
-- Angka **belum tabular-nums** → angka bergoyang saat nilai berubah.
-- Icon dekoratif `contentDescription = null` (a11y).
-- `statusBarColor`/`navigationBarColor` manual (deprecated di AGP baru).
+**Don't:**
+- Pakai gradient dekoratif (sudah dihapus; pakai surface tonal solid).
+- Bikin card-in-card (kotak bersarang di dalam Card).
+- Pakai gaya eyebrow/kicker uppercase di atas konten.
+- Hardcode width field angka (bikin rusak saat font scale besar).

@@ -50,8 +50,13 @@ Fondasi rumus sudah diverifikasi terhadap data *Income Details* Shopee nyata
 - Biaya tambahan opsional: Promo XTRA (persen, bisa di-toggle), Shipping Fee
   Saver (nominal), Premium (nominal).
 - Auto-format Rupiah, kalkulasi real-time, validasi input, reset.
-- MVVM sederhana (ViewModel + State), Jetpack Compose, Material 3.
-- **Rencana (belum diimplementasi):** riwayat perhitungan persisten (DataStore).
+- Input disimpan ke `SavedStateHandle` (tahan proses death).
+- **Riwayat perhitungan** persisten (DataStore): simpan manual, daftar
+  expand/collapse, detail lengkap, muat ulang ke kalkulator, hapus satu/semua,
+  maksimal 50 entri terbaru.
+- Light **dan** dark theme + Dynamic Color (Material You, default aktif di
+  Android 12+).
+- MVVM (ViewModel + State), Jetpack Compose, Material 3.
 - **Terbuka:** mungkin nanti ambil/update tarif fee dari internet; saat ini
   offline penuh dengan tarif hardcode di kode.
 
@@ -76,5 +81,7 @@ Fondasi rumus sudah diverifikasi terhadap data *Income Details* Shopee nyata
 
 ## Accessibility & Inclusion
 
-- Target: Material 3 standar (touch target ≥48dp, kontras teks ≥4.5:1).
-- Rencana: dukungan light theme + Dynamic Color; saat ini dark-only.
+- Target: Material 3 standar (touch target ≥48dp, ikon aksi punya
+  contentDescription, pesan error diumumkan via live region).
+- Light + dark theme, Dynamic Color opsional (default aktif Android 12+).
+- Angka memakai tabular-nums agar stabil saat berubah.
