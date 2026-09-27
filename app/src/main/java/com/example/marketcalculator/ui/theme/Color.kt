@@ -53,3 +53,45 @@ val OnErrorDark    = Color(0xFF2A0608)  // Teks gelap di atas merah
 // Tertiary — Biru muda, buat aksen info
 // ═══════════════════════════════════════════════
 val AccentBlue = Color(0xFF58A6FF)  // Link / highlight info
+
+// ═══════════════════════════════════════════════
+// Palet warna LIGHT theme
+// Netral terang dengan aksen hangat yang sama, kontras WCAG AA
+// ═══════════════════════════════════════════════
+
+// Background & Surface
+val LightBackground        = Color(0xFFFCFCFD)  // Latar utama
+val LightSurface           = Color(0xFFFFFFFF)  // Card & container
+val LightSurfaceLow        = Color(0xFFF6F8FA)  // Bagian dalam
+val LightSurfaceHigh       = Color(0xFFF0F2F5)  // Elevated card
+val LightSurfaceBright     = Color(0xFFE6E9EC)  // Hover / pressed
+val LightSurfaceLowest     = Color(0xFFFFFFFF)  // Backdrop
+
+// Border & Divider
+val LightOutline           = Color(0xFFB9C0C8)  // Border utama
+val LightOutlineVariant    = Color(0xFFDDE1E5)  // Divider halus
+
+// Teks
+val LightOnSurface         = Color(0xFF1B1F24)  // Teks utama, hampir hitam
+val LightOnSurfaceVariant  = Color(0xFF57606A)  // Teks sekunder, abu gelap
+
+// Primary — warm amber (lebih gelap agar kontras di latar terang)
+val PrimaryOrangeLightTheme      = Color(0xFFB4530A)  // Primary teks/ikon di background
+val PrimaryOrangeLightThemeCont  = Color(0xFFFFDCC2)  // Container primary
+val OnPrimaryLightTheme          = Color(0xFFFFFFFF)  // Teks di atas primary
+val OnPrimaryContainerLight      = Color(0xFF381100)  // Teks di atas container primary
+
+// Secondary — hijau profit (lebih gelap)
+val ProfitGreenLight             = Color(0xFF0E6B2E)  // Hijau profit (teks/ikon)
+val OnProfitGreenLight           = Color(0xFFFFFFFF)  // Teks di atas hijau
+val ProfitGreenContainerLight    = Color(0xFFC8F0CF)  // Container penghasilan bersih
+val OnProfitContainerLight       = Color(0xFF04240C)  // Teks di atas container hijau
+
+// Error — merah (lebih gelap)
+val ErrorRedLight                = Color(0xFFB3211B)  // Merah error
+val OnErrorLight                 = Color(0xFFFFFFFF)  // Teks di atas merah
+val ErrorContainerLight          = Color(0xFFFFDAD6)  // Container error
+val OnErrorContainerLight        = Color(0xFF410002)  // Teks di atas container error
+
+// Tertiary — biru info (lebih gelap)
+val AccentBlueLight              = Color(0xFF0A5BC4)  // Link / highlight info
