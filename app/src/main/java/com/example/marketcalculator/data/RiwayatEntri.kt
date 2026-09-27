@@ -21,8 +21,7 @@ data class RiwayatEntri(
     val diskonPersen: Int,
     val promoXtraPersen: Double,
     val promoXtraAktif: Boolean,
-    val shippingSaver: Long,
-    val premium: Long,
+    val pakaiShippingSaver: Boolean = false,
 
     // Ringkasan hasil saat dihitung
     val persenFee: Double,
