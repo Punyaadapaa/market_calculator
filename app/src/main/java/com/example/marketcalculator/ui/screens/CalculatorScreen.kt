@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,8 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected as semanticsSelected
@@ -61,6 +64,17 @@ import com.example.marketcalculator.ui.util.formatRupiah
 @Composable
 fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
     val uiState = viewModel.uiState
+
+    // Lacak berapa field yang sedang fokus. Saat jumlahnya turun ke 0
+    // (keyboard ditutup / user ketuk di luar), perhitungan dianggap SELESAI
+    // lalu disimpan ke riwayat.
+    val jumlahFokus = remember { mutableStateOf(0) }
+    val onFokusBerubah: (Boolean) -> Unit = { fokus ->
+        val baru = (jumlahFokus.value + if (fokus) 1 else -1).coerceAtLeast(0)
+        val sebelumnya = jumlahFokus.value
+        jumlahFokus.value = baru
+        if (sebelumnya > 0 && baru == 0) viewModel.simpanRiwayat()
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -108,14 +122,16 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                             onHargaAwalChange = viewModel::onHargaAwalChange,
                             diskonPersen = uiState.diskonPersenHargaJual,
                             onDiskonChange = viewModel::onDiskonHargaJualChange,
-                            pesanError = uiState.pesanError
+                            pesanError = uiState.pesanError,
+                            onFokusBerubah = onFokusBerubah
                         )
                         CalcMode.TARGET_HARGA -> TargetHargaForm(
                             targetHarga = uiState.targetHarga,
                             onTargetHargaChange = viewModel::onTargetHargaChange,
                             diskonPersen = uiState.diskonPersen,
                             onDiskonChange = viewModel::onDiskonChange,
-                            pesanError = uiState.pesanError
+                            pesanError = uiState.pesanError,
+                            onFokusBerubah = onFokusBerubah
                         )
                     }
                 }
@@ -137,7 +153,8 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     promoXtraPersen = uiState.promoXtraPersen,
                     onPromoXtraPersenChange = viewModel::onPromoXtraPersenChange,
                     pakaiShippingSaver = uiState.pakaiShippingSaver,
-                    onShippingSaverToggle = viewModel::onShippingSaverToggle
+                    onShippingSaverToggle = viewModel::onShippingSaverToggle,
+                    onFokusBerubah = onFokusBerubah
                 )
 
                 // ── Section Label: Hasil ──
@@ -324,14 +341,17 @@ private fun HargaJualForm(
     onHargaAwalChange: (String) -> Unit,
     diskonPersen: String,
     onDiskonChange: (String) -> Unit,
-    pesanError: String?
+    pesanError: String?,
+    onFokusBerubah: (Boolean) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     FormCard(title = "Harga Produk") {
         RupiahField(
             label = "Harga Sebelum Diskon",
             value = hargaAwal,
             onValueChange = onHargaAwalChange,
-            icon = Icons.Outlined.Payments
+            icon = Icons.Outlined.Payments,
+            onFokusBerubah = onFokusBerubah
         )
         OutlinedTextField(
             value = diskonPersen,
@@ -348,7 +368,10 @@ private fun HargaJualForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
             ),
             isError = pesanError != null,
             supportingText = {
@@ -364,7 +387,9 @@ private fun HargaJualForm(
             },
             shape = RoundedCornerShape(12.dp),
             textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFokusBerubah(it.isFocused) }
         )
     }
 }
@@ -375,14 +400,17 @@ private fun TargetHargaForm(
     onTargetHargaChange: (String) -> Unit,
     diskonPersen: String,
     onDiskonChange: (String) -> Unit,
-    pesanError: String?
+    pesanError: String?,
+    onFokusBerubah: (Boolean) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     FormCard(title = "Target Pembeli") {
         RupiahField(
             label = "Harga Dibayar Pembeli",
             value = targetHarga,
             onValueChange = onTargetHargaChange,
-            icon = Icons.Outlined.ShoppingCart
+            icon = Icons.Outlined.ShoppingCart,
+            onFokusBerubah = onFokusBerubah
         )
         OutlinedTextField(
             value = diskonPersen,
@@ -399,7 +427,10 @@ private fun TargetHargaForm(
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
             ),
             isError = pesanError != null,
             supportingText = {
@@ -415,7 +446,9 @@ private fun TargetHargaForm(
             },
             shape = RoundedCornerShape(12.dp),
             textStyle = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFokusBerubah(it.isFocused) }
         )
     }
 }
@@ -452,7 +485,8 @@ private fun RupiahField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    icon: ImageVector
+    icon: ImageVector,
+    onFokusBerubah: (Boolean) -> Unit = {}
 ) {
     OutlinedTextField(
         value = value,
@@ -471,7 +505,9 @@ private fun RupiahField(
         visualTransformation = ThousandsSeparatorTransformation(),
         shape = RoundedCornerShape(12.dp),
         textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { onFokusBerubah(it.isFocused) }
     )
 }
 
@@ -484,7 +520,8 @@ private fun BiayaTambahanCard(
     promoXtraPersen: String,
     onPromoXtraPersenChange: (String) -> Unit,
     pakaiShippingSaver: Boolean,
-    onShippingSaverToggle: (Boolean) -> Unit
+    onShippingSaverToggle: (Boolean) -> Unit,
+    onFokusBerubah: (Boolean) -> Unit
 ) {
     FormCard(title = "Biaya Shopee") {
         KategoriDropdown(
@@ -496,7 +533,8 @@ private fun BiayaTambahanCard(
             checked = promoXtraAktif,
             onCheckedChange = onPromoXtraToggle,
             persen = promoXtraPersen,
-            onPersenChange = onPromoXtraPersenChange
+            onPersenChange = onPromoXtraPersenChange,
+            onFokusBerubah = onFokusBerubah
         )
 
         ToggleRow(
@@ -635,8 +673,10 @@ private fun PromoXtraRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     persen: String,
-    onPersenChange: (String) -> Unit
+    onPersenChange: (String) -> Unit,
+    onFokusBerubah: (Boolean) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -692,9 +732,14 @@ private fun PromoXtraRow(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 shape = RoundedCornerShape(10.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.tabularNums(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { onFokusBerubah(it.isFocused) }
             )
         }
     }

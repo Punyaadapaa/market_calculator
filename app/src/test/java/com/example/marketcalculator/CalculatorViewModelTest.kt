@@ -79,4 +79,25 @@ class CalculatorViewModelTest {
         // 200.000 x 0,5% = 1.000, selalu ada tanpa input user.
         assertEquals(1_000L, vm.uiState.hasil.premiumFee)
     }
+
+    @Test
+    fun `simpanRiwayat aman dipanggil saat belum ada hitungan`() {
+        val handle = SavedStateHandle()
+        val vm = CalculatorViewModel(app, handle)
+        // State kosong: tidak boleh error / menyimpan sampah.
+        vm.simpanRiwayat()
+        vm.simpanRiwayat()
+    }
+
+    @Test
+    fun `simpanRiwayat aman dipanggil berulang dengan input sama (anti-duplikat)`() {
+        val handle = SavedStateHandle()
+        val vm = CalculatorViewModel(app, handle)
+        vm.onHargaAwalChange("1000000")
+        vm.onKategoriChange(KategoriFee.FASHION_BAWAH)
+        // Panggil berkali-kali dengan input identik: tidak boleh error.
+        vm.simpanRiwayat()
+        vm.simpanRiwayat()
+        vm.simpanRiwayat()
+    }
 }
