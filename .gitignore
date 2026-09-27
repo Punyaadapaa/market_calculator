@@ -17,3 +17,8 @@ local.properties
 # Local IDE / editor config
 .idea/
 .vscode/
+
+# Local AI agent skills (berisi binary besar, tidak untuk repo publik)
+.agents/
+.cursor/
+.opencode/
