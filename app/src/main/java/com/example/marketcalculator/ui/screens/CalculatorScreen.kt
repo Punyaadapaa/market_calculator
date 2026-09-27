@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.marketcalculator.BuildConfig
 import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
@@ -144,6 +145,9 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
 
                 // ── Info Footer ──
                 InfoFooter()
+
+                // ── Versi app (dari BuildConfig, otomatis dari build.gradle) ──
+                VersionFooter()
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -320,7 +324,7 @@ private fun HargaJualForm(
         subtitle = "Masukkan harga produk yang dipasang di Shopee"
     ) {
         RupiahField(
-            label = "Harga Produk (Before)",
+            label = "Harga Produk (Sebelum Diskon)",
             value = hargaAwal,
             onValueChange = onHargaAwalChange,
             icon = Icons.Outlined.Payments
@@ -364,7 +368,7 @@ private fun TargetHargaForm(
         subtitle = "Harga yang ingin dibayar pembeli setelah diskon"
     ) {
         RupiahField(
-            label = "Target Harga Bayar Pembeli (After)",
+            label = "Target Harga Setelah Diskon",
             value = targetHarga,
             onValueChange = onTargetHargaChange,
             icon = Icons.Outlined.ShoppingCart
@@ -601,7 +605,7 @@ private fun PromoXtraRow(
             )
             Spacer(Modifier.height(1.dp))
             Text(
-                if (checked) "Aktif — persen dari harga before" else "Nonaktif",
+                if (checked) "Aktif — persen dari harga awal" else "Nonaktif",
                 style = MaterialTheme.typography.bodySmall,
                 color = if (checked)
                     MaterialTheme.colorScheme.primary
@@ -979,6 +983,17 @@ private fun InfoFooter() {
             lineHeight = 16.sp
         )
     }
+}
+
+@Composable
+private fun VersionFooter() {
+    Text(
+        text = "v${BuildConfig.VERSION_NAME}",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 // ═══════════════════════════════════════════════════════════
