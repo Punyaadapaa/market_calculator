@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.TrendingDown
@@ -40,6 +41,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -345,6 +348,10 @@ private fun HargaJualForm(
             },
             suffix = { Text("%") },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
             isError = pesanError != null,
             supportingText = {
                 if (pesanError != null) {
@@ -389,6 +396,10 @@ private fun TargetHargaForm(
             },
             suffix = { Text("%") },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
             isError = pesanError != null,
             supportingText = {
                 if (pesanError != null) {
@@ -461,6 +472,10 @@ private fun RupiahField(
         prefix = { Text("Rp ") },
         placeholder = { Text("0") },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next
+        ),
         visualTransformation = ThousandsSeparatorTransformation(),
         shape = RoundedCornerShape(12.dp),
         textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
@@ -622,6 +637,10 @@ private fun PromoXtraRow(
                 onValueChange = onPersenChange,
                 suffix = { Text("%") },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
                 shape = RoundedCornerShape(10.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.tabularNums(),
                 modifier = Modifier.width(96.dp)
