@@ -56,4 +56,27 @@ class CalculatorViewModelTest {
         val vm2 = CalculatorViewModel(app, handle)
         assertEquals("", vm2.uiState.hargaAwal)
     }
+
+    @Test
+    fun `hasil terhitung otomatis tiap perubahan input`() {
+        val handle = SavedStateHandle()
+        val vm = CalculatorViewModel(app, handle)
+        // Awal: kosong.
+        assertEquals(0L, vm.uiState.hasil.penghasilanBersih)
+
+        // Setelah input: langsung terhitung (auto), tanpa aksi hitung manual.
+        vm.onHargaAwalChange("1000000")
+        vm.onKategoriChange(KategoriFee.FASHION_BAWAH)
+        assertNotEquals(0L, vm.uiState.hasil.penghasilanBersih)
+        assertEquals(82_500L, vm.uiState.hasil.commissionFee)
+    }
+
+    @Test
+    fun `premium selalu dihitung 0_5 persen`() {
+        val handle = SavedStateHandle()
+        val vm = CalculatorViewModel(app, handle)
+        vm.onHargaAwalChange("200000")
+        // 200.000 x 0,5% = 1.000, selalu ada tanpa input user.
+        assertEquals(1_000L, vm.uiState.hasil.premiumFee)
+    }
 }

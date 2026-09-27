@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -589,7 +590,8 @@ private fun KategoriDropdown(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            supportingText = { Text("Fee admin: ${formatPersen(kategori.persen)}") },
+            suffix = { Text("${formatPersen(kategori.persen)}") },
+            supportingText = { Text(kategori.contoh, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             shape = RoundedCornerShape(12.dp),
             textStyle = MaterialTheme.typography.titleMedium,
             modifier = Modifier
@@ -603,10 +605,20 @@ private fun KategoriDropdown(
             KategoriFee.entries.forEach { item ->
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            "${item.label}  (${formatPersen(item.persen)})",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Column {
+                            Text(
+                                "${item.label}  (${formatPersen(item.persen)})",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                item.contoh,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     },
                     onClick = {
                         onKategoriChange(item)

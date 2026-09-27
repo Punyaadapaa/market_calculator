@@ -179,7 +179,12 @@ class CalculatorViewModel(
     /** Muat entri riwayat kembali ke kalkulator untuk dihitung ulang/diubah. */
     fun muatDariRiwayat(entri: RiwayatEntri) {
         val mode = runCatching { CalcMode.valueOf(entri.mode) }.getOrDefault(CalcMode.HARGA_JUAL)
+        // Cocokkan label dulu; kalau gagal (mis. label lama sudah berubah),
+        // fallback ke persen fee yang tersimpan di entri.
         val kategori = KategoriFee.entries.firstOrNull { it.label == entri.kategoriNama }
+            ?: KategoriFee.entries.firstOrNull {
+                kotlin.math.abs(it.persen - entri.persenFee) < 0.001
+            }
             ?: uiState.kategoriFee
         val dasar = CalculatorUiState(
             mode = mode,
