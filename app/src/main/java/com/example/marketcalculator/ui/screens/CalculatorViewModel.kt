@@ -29,14 +29,13 @@ data class CalculatorUiState(
 
     // Input mode Target Harga
     val targetHarga: String = "",
-    val diskonPersen: String = "25",
+    val diskonPersen: String = "0",
     val pakaiPromoXtraTarget: Boolean = false,
 
     // Kategori & biaya tambahan (dipakai kedua mode)
     val kategoriFee: KategoriFee = KategoriFee.default,
     val promoXtraPersen: String = PROMO_XTRA_DEFAULT_PERCENT.toString(),
-    val shippingSaver: String = "",
-    val premium: String = "",
+    val pakaiShippingSaver: Boolean = false,
 
     val hasil: HasilKalkulasi = HasilKalkulasi(),
     val pesanError: String? = null
@@ -59,6 +58,9 @@ class CalculatorViewModel(
     var uiState by mutableStateOf(muatStateAwal())
         private set
 
+    /** Input perhitungan valid terakhir yang sudah disimpan (anti-duplikat). */
+    private var kunciTerakhir: String? = null
+
     /**
      * Bangun state awal. Kalau proses app pernah dimatikan sistem dan
      * dipulihkan, ambil lagi input terakhir dari SavedStateHandle.
@@ -79,8 +81,7 @@ class CalculatorViewModel(
                 ?.let { runCatching { KategoriFee.valueOf(it) }.getOrNull() }
                 ?: default.kategoriFee,
             promoXtraPersen = savedState[KEY_PROMO_PERSEN] ?: default.promoXtraPersen,
-            shippingSaver = savedState[KEY_SAVER] ?: default.shippingSaver,
-            premium = savedState[KEY_PREMIUM] ?: default.premium
+            pakaiShippingSaver = savedState[KEY_SAVER] ?: default.pakaiShippingSaver
         )
         return hitung(state)
     }
@@ -96,9 +97,10 @@ class CalculatorViewModel(
         savedState[KEY_PROMO_TARGET] = state.pakaiPromoXtraTarget
         savedState[KEY_KATEGORI] = state.kategoriFee.name
         savedState[KEY_PROMO_PERSEN] = state.promoXtraPersen
-        savedState[KEY_SAVER] = state.shippingSaver
-        savedState[KEY_PREMIUM] = state.premium
-        return hitung(state)
+        savedState[KEY_SAVER] = state.pakaiShippingSaver
+        val hasil = hitung(state)
+        simpanOtomatis(hasil)
+        return hasil
     }
 
     private companion object {
@@ -112,12 +114,12 @@ class CalculatorViewModel(
         const val KEY_KATEGORI = "kategori"
         const val KEY_PROMO_PERSEN = "promo_persen"
         const val KEY_SAVER = "saver"
-        const val KEY_PREMIUM = "premium"
     }
+
+    // ── Aksi input ───────────────────────────────────────────
 
     fun onModeChange(mode: CalcMode) {
         if (mode == uiState.mode) return
-        // Jangan bawa diskon antar mode: field-nya beda & default-nya beda.
         uiState = terapkan(uiState.copy(mode = mode, pesanError = null))
     }
 
@@ -134,7 +136,6 @@ class CalculatorViewModel(
     }
 
     fun onDiskonChange(value: String) {
-        // Batasi maksimal 3 digit biar gak ada yang iseng ngetik diskon 99999%.
         uiState = terapkan(uiState.copy(diskonPersen = value.filter { it.isDigit() }.take(3)))
     }
 
@@ -156,55 +157,16 @@ class CalculatorViewModel(
         uiState = terapkan(uiState.copy(promoXtraPersen = bersih))
     }
 
-    fun onShippingSaverChange(value: String) {
-        uiState = terapkan(uiState.copy(shippingSaver = value.filter { it.isDigit() }))
-    }
-
-    fun onPremiumChange(value: String) {
-        uiState = terapkan(uiState.copy(premium = value.filter { it.isDigit() }))
+    fun onShippingSaverToggle(checked: Boolean) {
+        uiState = terapkan(uiState.copy(pakaiShippingSaver = checked))
     }
 
     fun onReset() {
-        val kosong = CalculatorUiState()
-        uiState = terapkan(kosong.copy(hasil = HasilKalkulasi()))
+        kunciTerakhir = null
+        uiState = terapkan(CalculatorUiState())
     }
 
     // ── Riwayat ──────────────────────────────────────────────
-
-    /** Simpan perhitungan saat ini ke riwayat (dipanggil user). */
-    fun simpanKeRiwayat() {
-        val s = uiState
-        val h = s.hasil
-        if (h.totalPotongan == 0L && h.penghasilanBersih == 0L) return // belum ada hitungan
-        val entri = RiwayatEntri(
-            id = System.currentTimeMillis(),
-            mode = s.mode.name,
-            kategoriNama = s.kategoriFee.label,
-            hargaAwal = when (s.mode) {
-                CalcMode.HARGA_JUAL -> s.hargaAwal.toLongOrNull() ?: 0L
-                CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
-            },
-            diskonPersen = when (s.mode) {
-                CalcMode.HARGA_JUAL -> s.diskonPersenHargaJual.toIntOrNull() ?: 0
-                CalcMode.TARGET_HARGA -> s.diskonPersen.toIntOrNull() ?: 0
-            },
-            promoXtraPersen = s.promoXtraPersen.toDoubleOrNull() ?: 0.0,
-            promoXtraAktif = promoXtraAktif(s),
-            shippingSaver = s.shippingSaver.toLongOrNull() ?: 0L,
-            premium = s.premium.toLongOrNull() ?: 0L,
-            persenFee = h.persenFeeAktif,
-            commissionFee = h.commissionFee,
-            prosesFee = h.prosesFee,
-            promoXtraFee = h.promoXtraFee,
-            shippingSaverFee = h.shippingSaverFee,
-            premiumFee = h.premiumFee,
-            totalPotongan = h.totalPotongan,
-            penghasilanBersih = h.penghasilanBersih,
-            hargaWajibPasang = h.hargaWajibPasang,
-            hargaSetelahDiskon = h.hargaSetelahDiskon
-        )
-        viewModelScope.launch { riwayatRepo.tambah(entri) }
-    }
 
     fun hapusRiwayat(id: Long) {
         viewModelScope.launch { riwayatRepo.hapus(id) }
@@ -229,15 +191,77 @@ class CalculatorViewModel(
             pakaiPromoXtraTarget = if (mode == CalcMode.TARGET_HARGA) entri.promoXtraAktif else uiState.pakaiPromoXtraTarget,
             kategoriFee = kategori,
             promoXtraPersen = trimAngkaDesimal(entri.promoXtraPersen),
-            shippingSaver = if (entri.shippingSaver > 0) entri.shippingSaver.toString() else "",
-            premium = if (entri.premium > 0) entri.premium.toString() else ""
+            pakaiShippingSaver = entri.pakaiShippingSaver
         )
         uiState = terapkan(dasar)
+    }
+
+    /**
+     * Simpan otomatis hasil perhitungan ke riwayat. Dilewati kalau:
+     * - belum ada hitungan valid (harga 0 / ada error), atau
+     * - inputnya sama persis dengan yang terakhir disimpan (anti-duplikat).
+     */
+    private fun simpanOtomatis(state: CalculatorUiState) {
+        if (state.pesanError != null) return
+        val h = state.hasil
+        if (h.totalPotongan == 0L && h.penghasilanBersih == 0L) return
+
+        val kunci = daftarKunci(state)
+        if (kunci == kunciTerakhir) return
+        kunciTerakhir = kunci
+
+        val entri = RiwayatEntri(
+            id = System.currentTimeMillis(),
+            mode = state.mode.name,
+            kategoriNama = state.kategoriFee.label,
+            hargaAwal = when (state.mode) {
+                CalcMode.HARGA_JUAL -> state.hargaAwal.toLongOrNull() ?: 0L
+                CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
+            },
+            diskonPersen = when (state.mode) {
+                CalcMode.HARGA_JUAL -> state.diskonPersenHargaJual.toIntOrNull() ?: 0
+                CalcMode.TARGET_HARGA -> state.diskonPersen.toIntOrNull() ?: 0
+            },
+            promoXtraPersen = state.promoXtraPersen.toDoubleOrNull() ?: 0.0,
+            promoXtraAktif = promoXtraAktif(state),
+            pakaiShippingSaver = state.pakaiShippingSaver,
+            persenFee = h.persenFeeAktif,
+            commissionFee = h.commissionFee,
+            prosesFee = h.prosesFee,
+            promoXtraFee = h.promoXtraFee,
+            shippingSaverFee = h.shippingSaverFee,
+            premiumFee = h.premiumFee,
+            totalPotongan = h.totalPotongan,
+            penghasilanBersih = h.penghasilanBersih,
+            hargaWajibPasang = h.hargaWajibPasang,
+            hargaSetelahDiskon = h.hargaSetelahDiskon
+        )
+        viewModelScope.launch { riwayatRepo.tambah(entri) }
+    }
+
+    /** Kunci identitas input (untuk deteksi duplikat). */
+    private fun daftarKunci(state: CalculatorUiState): String = listOf(
+        state.mode.name,
+        state.hargaAwal,
+        state.diskonPersenHargaJual,
+        state.targetHarga,
+        state.diskonPersen,
+        state.kategoriFee.name,
+        state.promoXtraPersen,
+        pakaiPromoXtraFlags(state),
+        state.pakaiShippingSaver.toString()
+    ).joinToString("|")
+
+    private fun pakaiPromoXtraFlags(state: CalculatorUiState): String = when (state.mode) {
+        CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual.toString()
+        CalcMode.TARGET_HARGA -> state.pakaiPromoXtraTarget.toString()
     }
 
     /** 4.5 -> "4.5", 4.0 -> "4" (biar field-nya rapi). */
     private fun trimAngkaDesimal(nilai: Double): String =
         if (nilai % 1.0 == 0.0) nilai.toInt().toString() else nilai.toString()
+
+    // ── Perhitungan ──────────────────────────────────────────
 
     private fun promoXtraAktif(state: CalculatorUiState): Boolean = when (state.mode) {
         CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual
@@ -252,8 +276,6 @@ class CalculatorViewModel(
         } else {
             0.0
         }
-        val saver = state.shippingSaver.toLongOrNull() ?: 0L
-        val premium = state.premium.toLongOrNull() ?: 0L
 
         return when (state.mode) {
             CalcMode.HARGA_JUAL -> {
@@ -264,11 +286,10 @@ class CalculatorViewModel(
                     diskonPersen = diskon,
                     kategoriFee = kategori,
                     promoXtraPersen = promoPersen,
-                    shippingSaver = saver,
-                    premium = premium
+                    pakaiShippingSaver = state.pakaiShippingSaver
                 )
                 if (hasil == null) {
-                    state.copy(pesanError = "Diskon nggak bisa 100% atau lebih")
+                    state.copy(pesanError = "Diskon tidak boleh 100% atau lebih")
                 } else {
                     state.copy(hasil = hasil, pesanError = null)
                 }
@@ -282,13 +303,10 @@ class CalculatorViewModel(
                     diskonPersen = diskon,
                     kategoriFee = kategori,
                     promoXtraPersen = promoPersen,
-                    shippingSaver = saver,
-                    premium = premium
+                    pakaiShippingSaver = state.pakaiShippingSaver
                 )
                 if (hasil == null) {
-                    state.copy(
-                        pesanError = "Diskon nggak bisa 100% atau lebih, hasilnya jadi gak masuk akal"
-                    )
+                    state.copy(pesanError = "Diskon tidak boleh 100% atau lebih")
                 } else {
                     state.copy(hasil = hasil, pesanError = null)
                 }
