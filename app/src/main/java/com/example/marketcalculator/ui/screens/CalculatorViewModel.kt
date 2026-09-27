@@ -14,6 +14,8 @@ import com.example.marketcalculator.data.KategoriFee
 import com.example.marketcalculator.data.PROMO_XTRA_DEFAULT_PERCENT
 import com.example.marketcalculator.data.RiwayatEntri
 import com.example.marketcalculator.data.RiwayatRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -61,6 +63,9 @@ class CalculatorViewModel(
     /** Input perhitungan valid terakhir yang sudah disimpan (anti-duplikat). */
     private var kunciTerakhir: String? = null
 
+    /** Job debounce penyimpanan riwayat (dibatalkan tiap input baru). */
+    private var jobSimpan: Job? = null
+
     /**
      * Bangun state awal. Kalau proses app pernah dimatikan sistem dan
      * dipulihkan, ambil lagi input terakhir dari SavedStateHandle.
@@ -104,6 +109,13 @@ class CalculatorViewModel(
     }
 
     private companion object {
+        /**
+         * Jeda (ms) sebelum hasil disimpan ke riwayat, dihitung sejak input
+         * terakhir. Memberi waktu user selesai mengetik supaya 1 perhitungan
+         * hanya tersimpan sekali.
+         */
+        const val JEDA_SIMPAN_MS = 800L
+
         const val KEY_MODE = "mode"
         const val KEY_HARGA_AWAL = "harga_awal"
         const val KEY_DISKON_HJ = "diskon_hj"
@@ -162,6 +174,7 @@ class CalculatorViewModel(
     }
 
     fun onReset() {
+        jobSimpan?.cancel()
         kunciTerakhir = null
         uiState = terapkan(CalculatorUiState())
     }
@@ -202,46 +215,59 @@ class CalculatorViewModel(
     }
 
     /**
-     * Simpan otomatis hasil perhitungan ke riwayat. Dilewati kalau:
+     * Simpan otomatis hasil perhitungan ke riwayat, SETELAH user berhenti
+     * mengetik selama [JEDA_SIMPAN_MS]. Ini mencegah 1 perhitungan tercatat
+     * berkali-kali saat harga diketik digit per digit (mis. "1","10","100"...).
+     *
+     * Dilewati kalau:
      * - belum ada hitungan valid (harga 0 / ada error), atau
      * - inputnya sama persis dengan yang terakhir disimpan (anti-duplikat).
      */
     private fun simpanOtomatis(state: CalculatorUiState) {
+        // Batalkan jadwal simpan sebelumnya (user masih mengetik).
+        jobSimpan?.cancel()
+
         if (state.pesanError != null) return
         val h = state.hasil
         if (h.totalPotongan == 0L && h.penghasilanBersih == 0L) return
 
         val kunci = daftarKunci(state)
         if (kunci == kunciTerakhir) return
-        kunciTerakhir = kunci
 
-        val entri = RiwayatEntri(
-            id = System.currentTimeMillis(),
-            mode = state.mode.name,
-            kategoriNama = state.kategoriFee.label,
-            hargaAwal = when (state.mode) {
-                CalcMode.HARGA_JUAL -> state.hargaAwal.toLongOrNull() ?: 0L
-                CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
-            },
-            diskonPersen = when (state.mode) {
-                CalcMode.HARGA_JUAL -> state.diskonPersenHargaJual.toIntOrNull() ?: 0
-                CalcMode.TARGET_HARGA -> state.diskonPersen.toIntOrNull() ?: 0
-            },
-            promoXtraPersen = state.promoXtraPersen.toDoubleOrNull() ?: 0.0,
-            promoXtraAktif = promoXtraAktif(state),
-            pakaiShippingSaver = state.pakaiShippingSaver,
-            persenFee = h.persenFeeAktif,
-            commissionFee = h.commissionFee,
-            prosesFee = h.prosesFee,
-            promoXtraFee = h.promoXtraFee,
-            shippingSaverFee = h.shippingSaverFee,
-            premiumFee = h.premiumFee,
-            totalPotongan = h.totalPotongan,
-            penghasilanBersih = h.penghasilanBersih,
-            hargaWajibPasang = h.hargaWajibPasang,
-            hargaSetelahDiskon = h.hargaSetelahDiskon
-        )
-        viewModelScope.launch { riwayatRepo.tambah(entri) }
+        jobSimpan = viewModelScope.launch {
+            delay(JEDA_SIMPAN_MS)
+            // Cek ulang: kalau ternyata sudah tersimpan (mis. karena aksi lain), skip.
+            if (kunci == kunciTerakhir) return@launch
+            kunciTerakhir = kunci
+
+            val entri = RiwayatEntri(
+                id = System.currentTimeMillis(),
+                mode = state.mode.name,
+                kategoriNama = state.kategoriFee.label,
+                hargaAwal = when (state.mode) {
+                    CalcMode.HARGA_JUAL -> state.hargaAwal.toLongOrNull() ?: 0L
+                    CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
+                },
+                diskonPersen = when (state.mode) {
+                    CalcMode.HARGA_JUAL -> state.diskonPersenHargaJual.toIntOrNull() ?: 0
+                    CalcMode.TARGET_HARGA -> state.diskonPersen.toIntOrNull() ?: 0
+                },
+                promoXtraPersen = state.promoXtraPersen.toDoubleOrNull() ?: 0.0,
+                promoXtraAktif = promoXtraAktif(state),
+                pakaiShippingSaver = state.pakaiShippingSaver,
+                persenFee = h.persenFeeAktif,
+                commissionFee = h.commissionFee,
+                prosesFee = h.prosesFee,
+                promoXtraFee = h.promoXtraFee,
+                shippingSaverFee = h.shippingSaverFee,
+                premiumFee = h.premiumFee,
+                totalPotongan = h.totalPotongan,
+                penghasilanBersih = h.penghasilanBersih,
+                hargaWajibPasang = h.hargaWajibPasang,
+                hargaSetelahDiskon = h.hargaSetelahDiskon
+            )
+            riwayatRepo.tambah(entri)
+        }
     }
 
     /** Kunci identitas input (untuk deteksi duplikat). */
