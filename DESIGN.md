@@ -136,12 +136,13 @@ Type scale Material 3 lengkap (`Type.kt`), ukuran dalam `sp`:
 
 - **ModeSelector** — dua tab pill (Harga Jual / Target Harga), tab aktif
   berbackground primary lembut.
-- **FormCard** — kartu dengan judul + subtitle + divider + isi.
+- **FormCard** — kartu berjudul + isi (tanpa subtitle/divider; hemat teks).
 - **RupiahField** — OutlinedTextField dengan prefix "Rp ", auto `ThousandsSeparatorTransformation`.
 - **KategoriDropdown** — ExposedDropdownMenuBox untuk memilih kategori fee.
+- **ToggleRow** — baris ikon + judul + keterangan opsional + Switch (dipakai Shipping Fee Saver).
 - **RingkasanCard** — rincian potongan (DetailRow per komponen) + panel
   penghasilan bersih + tombol Reset.
-- **InfoFooter** — catatan kecil tentang dasar perhitungan fee.
+- **RiwayatSection** — panel riwayat expand/collapse; entri tersimpan otomatis.
 
 ## Do's and Don'ts
 
