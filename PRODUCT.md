@@ -28,9 +28,10 @@ Dua arah kalkulasi:
 ## Positioning
 
 Akurat mengikuti **struktur biaya Shopee yang nyata**: fee admin bertingkat per
-kategori (9 tier, 2,50%–10,00%), biaya proses pesanan, serta biaya opsional
-(Promo XTRA, Shipping Fee Saver, Premium). Sebagian besar kalkulator fee lain
-hanya memakai satu persen kasar, sehingga hasilnya meleset.
+kategori (9 tier, 2,50%–10,00%), biaya proses pesanan, Premium (selalu, 0,5%
+dari harga), serta biaya opsional (Promo XTRA, Shipping Fee Saver). Sebagian
+besar kalkulator fee lain hanya memakai satu persen kasar, sehingga hasilnya
+meleset.
 
 Fondasi rumus sudah diverifikasi terhadap data *Income Details* Shopee nyata
 (selisih Rp0 pada kasus uji). Lihat `## Evidence on Hand`.
@@ -47,13 +48,14 @@ Fondasi rumus sudah diverifikasi terhadap data *Income Details* Shopee nyata
 
 - Kalkulasi fee admin per kategori (9 tier) dari harga **before**, karena
   voucher diskon yang ditanggung Shopee tidak mengurangi harga dari sisi seller.
-- Biaya tambahan opsional: Promo XTRA (persen, bisa di-toggle), Shipping Fee
-  Saver (nominal), Premium (nominal).
+- Biaya tambahan: Promo XTRA (persen, bisa di-toggle), Shipping Fee Saver
+  (toggle ON/OFF, nominal tetap Rp350), dan **Premium yang selalu dihitung**
+  otomatis 0,5% dari harga (tanpa input user).
 - Auto-format Rupiah, kalkulasi real-time, validasi input, reset.
 - Input disimpan ke `SavedStateHandle` (tahan proses death).
-- **Riwayat perhitungan** persisten (DataStore): simpan manual, daftar
-  expand/collapse, detail lengkap, muat ulang ke kalkulator, hapus satu/semua,
-  maksimal 50 entri terbaru.
+- **Riwayat perhitungan** persisten (DataStore): **tersimpan otomatis** tiap
+  perubahan input (melewati duplikat berurutan), daftar expand/collapse, detail
+  lengkap, muat ulang ke kalkulator, hapus satu/semua, maksimal 50 entri terbaru.
 - Light **dan** dark theme + Dynamic Color (Material You, default aktif di
   Android 12+).
 - MVVM (ViewModel + State), Jetpack Compose, Material 3.
@@ -62,12 +64,14 @@ Fondasi rumus sudah diverifikasi terhadap data *Income Details* Shopee nyata
 
 ## Evidence on Hand
 
-- **Data nyata Shopee** (`Income Details`, payout 17 Sept 2026):
-  harga before Rp1.000.000, voucher 25% (ditanggung Shopee), fee admin 8,25%,
-  Promo XTRA 4,5%, Shipping Saver Rp350, Premium Rp5.000 →
-  **Order Income Rp865.900**.
+- **Data nyata Shopee** (`Income Details`): harga before Rp1.000.000, voucher
+  25% (ditanggung Shopee), fee admin 8,25%, Promo XTRA 4,5%, Shipping Saver
+  Rp350, Premium Rp5.000 → **Order Income Rp865.900**.
+- **Premium terbukti = 0,5% dari harga** (bukan nominal tetap), diverifikasi
+  dari 3 transaksi: 1.000.000→5.000, 1.100.000→5.500, 734.000→3.670 (cocok
+  persis). Karena itu Premium dihitung otomatis, tanpa input user.
 - Rumus di kode mereproduksi angka ini **persis (selisih Rp0)**, dibuktikan
-  oleh unit test `CalculatorEngineTest` (13 test, semua lulus).
+  oleh unit test `CalculatorEngineTest` (semua lulus).
 - Sumber tarif: seller.shopee.co.id/edu/article/26511 (via Kontan.co.id).
 
 ## Product Principles
