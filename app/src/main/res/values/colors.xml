@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Latar window sebelum Compose selesai render (light theme). -->
-    <color name="window_background">#FCFCFD</color>
+    <color name="window_background">#F5F5F5</color>
+    <!-- Warna brand Shopee Orange (dipakai splash/aksen sistem). -->
+    <color name="brand_orange">#EE4D2D</color>
 </resources>

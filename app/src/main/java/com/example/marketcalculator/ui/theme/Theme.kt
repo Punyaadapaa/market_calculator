@@ -15,12 +15,13 @@ import androidx.core.view.WindowCompat
 /**
  * @param darkTheme    true = skema gelap. Default mengikuti setelan sistem.
  * @param dynamicColor true = pakai Dynamic Color (Material You) bila didukung
- *                     Android 12+ (API 31). Fallback ke skema brand bila tidak.
+ *                     Android 12+ (API 31). DEFAULT false supaya warna brand
+ *                     (Shopee Orange #EE4D2D) konsisten di semua perangkat.
  */
 @Composable
 fun KalkulatorSellerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

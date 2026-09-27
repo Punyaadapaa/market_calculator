@@ -24,13 +24,15 @@ val DarkOnSurface        = Color(0xFFE6EDF3)  // Teks utama, putih lembut
 val DarkOnSurfaceVariant = Color(0xFF8B949E)  // Teks sekunder, abu-abu
 
 // ═══════════════════════════════════════════════
-// Primary — Warm amber/orange, signature kalkulator seller
-// Lebih muted dari Shopee orange asli biar gak norak di dark mode
+// Primary — Shopee Orange (brand)
+// #EE4D2D adalah warna resmi Shopee. Di dark mode dipakai versi terang
+// (#FF6B4A) supaya kontras WCAG AA tetap aman di atas latar gelap.
 // ═══════════════════════════════════════════════
-val PrimaryOrange         = Color(0xFFFF8C42)  // Primary utama (warm amber)
-val PrimaryOrangeLight    = Color(0xFFFFB77A)  // Primary light (untuk teks di atas gelap)
-val OnPrimaryDark         = Color(0xFF3D1900)  // Teks di atas primary
-val PrimaryContainerDark  = Color(0xFF5C2D00)  // Container primary
+val ShopeeOrange          = Color(0xFFEE4D2D)  // Brand utama (referensi)
+val PrimaryOrange         = Color(0xFFFF6B4A)  // Primary di dark mode (lebih terang)
+val OnPrimaryDark         = Color(0xFFFFFFFF)  // Teks di atas primary
+val PrimaryContainerDark  = Color(0xFF5C1F0F)  // Container primary (dark)
+val OnPrimaryContainerDark = Color(0xFFFFDAD3) // Teks di atas container primary
 
 // ═══════════════════════════════════════════════
 // Secondary — Emerald hijau, buat angka "penghasilan bersih"
@@ -60,26 +62,26 @@ val AccentBlue = Color(0xFF58A6FF)  // Link / highlight info
 // ═══════════════════════════════════════════════
 
 // Background & Surface
-val LightBackground        = Color(0xFFFCFCFD)  // Latar utama
+val LightBackground        = Color(0xFFF5F5F5)  // Latar utama (Background Gray, sesuai spec)
 val LightSurface           = Color(0xFFFFFFFF)  // Card & container
-val LightSurfaceLow        = Color(0xFFF6F8FA)  // Bagian dalam
-val LightSurfaceHigh       = Color(0xFFF0F2F5)  // Elevated card
-val LightSurfaceBright     = Color(0xFFE6E9EC)  // Hover / pressed
+val LightSurfaceLow        = Color(0xFFEFEFEF)  // Bagian dalam
+val LightSurfaceHigh       = Color(0xFFE8E8E8)  // Elevated card
+val LightSurfaceBright     = Color(0xFFE0E0E0)  // Hover / pressed
 val LightSurfaceLowest     = Color(0xFFFFFFFF)  // Backdrop
 
 // Border & Divider
-val LightOutline           = Color(0xFFB9C0C8)  // Border utama
-val LightOutlineVariant    = Color(0xFFDDE1E5)  // Divider halus
+val LightOutline           = Color(0xFFB0B0B0)  // Border utama
+val LightOutlineVariant    = Color(0xFFDCDCDC)  // Divider halus
 
-// Teks
-val LightOnSurface         = Color(0xFF1B1F24)  // Teks utama, hampir hitam
-val LightOnSurfaceVariant  = Color(0xFF57606A)  // Teks sekunder, abu gelap
+// Teks (sesuai spec: Text Primary #222222, Text Secondary #757575)
+val LightOnSurface         = Color(0xFF222222)  // Teks utama, hampir hitam
+val LightOnSurfaceVariant  = Color(0xFF6B6B6B)  // Teks sekunder, abu
 
-// Primary — warm amber (lebih gelap agar kontras di latar terang)
-val PrimaryOrangeLightTheme      = Color(0xFFB4530A)  // Primary teks/ikon di background
-val PrimaryOrangeLightThemeCont  = Color(0xFFFFDCC2)  // Container primary
+// Primary — Shopee Orange (brand asli). Di light mode dipakai #EE4D2D.
+val PrimaryOrangeLightTheme      = Color(0xFFEE4D2D)  // Primary (brand) — tombol/aksen
+val PrimaryOrangeLightThemeCont  = Color(0xFFFFDAD3)  // Container primary
 val OnPrimaryLightTheme          = Color(0xFFFFFFFF)  // Teks di atas primary
-val OnPrimaryContainerLight      = Color(0xFF381100)  // Teks di atas container primary
+val OnPrimaryContainerLight      = Color(0xFF410000)  // Teks di atas container primary
 
 // Secondary — hijau profit (lebih gelap)
 val ProfitGreenLight             = Color(0xFF0E6B2E)  // Hijau profit (teks/ikon)

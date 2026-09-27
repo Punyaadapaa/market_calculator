@@ -10,7 +10,7 @@ val KalkulatorDarkColorScheme = darkColorScheme(
     primary = PrimaryOrange,
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
-    onPrimaryContainer = PrimaryOrangeLight,
+    onPrimaryContainer = OnPrimaryContainerDark,
 
     secondary = ProfitGreen,
     onSecondary = OnProfitGreen,
