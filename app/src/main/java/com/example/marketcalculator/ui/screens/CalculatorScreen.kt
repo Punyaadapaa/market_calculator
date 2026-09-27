@@ -58,13 +58,16 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
     val uiState = viewModel.uiState
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .imePadding()
         ) {
             // ── Header ──
             HeaderSection()
