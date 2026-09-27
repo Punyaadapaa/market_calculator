@@ -1,57 +1,71 @@
 package com.example.marketcalculator.data
 
 /**
- * 9 tier Biaya Administrasi Shopee 2026 (Penjual Non-Star & Star/Star+).
+ * 9 tier Biaya Administrasi Shopee (Penjual Non-Star, Star & Star+).
  *
- * Sumber: seller.shopee.co.id/edu/article/26511 (via Kontan.co.id).
- * Dasar perhitungan: harga SEBELUM diskon (harga before), karena voucher yang
- * ditanggung Shopee tidak mengurangi harga produk dari sisi penjual.
+ * Sumber RESMI: seller.shopee.co.id/edu/article/15965
+ * ("Rincian Biaya Penjual Shopee per Kategori Produk", versi 30-07-2026).
+ * Tarif final: 10,00% / 9,50% / 9,00% / 8,25% / 6,75% / 6,50% / 5,25% / 4,25% / 2,50%.
  *
- * Catatan: Shopee Mall punya skema terpisah. Tier di sini berlaku untuk
+ * Dasar perhitungan = harga SEBELUM diskon (harga before) saat voucher
+ * ditanggung Shopee, karena voucher itu tidak mengurangi harga dari sisi
+ * penjual. (Kalau voucher ditanggung PENJUAL, barulah dikurangi dulu.)
+ *
+ * Catatan: Shopee Mall punya skema terpisah (2,50%–11,70%). Tier di sini untuk
  * penjual reguler. Persen bisa berubah sewaktu-waktu — sesuaikan bila ada update.
  */
 enum class KategoriFee(
     val label: String,
+    val contoh: String,
     val persen: Double
 ) {
     KHUSUS(
-        "E-Money / Tiket / Voucher",
+        "Otomotif / Kendaraan",
+        "Mobil, Sepeda Motor",
         2.50
     ),
     LOGAM_MULIA(
-        "Logam Mulia / Perhiasan Berharga",
+        "Logam Mulia & Perhiasan",
+        "Emas, Perak, Berlian, Perhiasan Berharga",
         4.25
     ),
     ELEKTRONIK_HE(
         "Elektronik High-End",
+        "Handphone, Desktop PC, Proyektor",
         5.25
     ),
     SUPLEMEN(
-        "Vitamin & Suplemen Bayi",
+        "Kesehatan Bayi & Elektronik Besar",
+        "Vitamin Bayi, Mesin Cuci, AC, Susu & Olahan",
         6.50
     ),
     SUSU_FORMULA(
-        "Susu Formula & Makanan Bayi",
+        "Audio, Komputer & Bahan Makanan",
+        "Earphone/Headset, Aksesoris Laptop, Susu Formula, Baking",
         6.75
     ),
     FASHION_BAWAH(
-        "Atasan / Mukena / Aksesoris",
+        "Fashion & Ibu Bayi",
+        "Atasan, Mukena, E-Money, Alat Kecantikan, Perlengkapan Bayi",
         8.25
     ),
     TAS_JAM(
-        "Tas / Jam / Perawatan Diri",
+        "Tas, Jam, Sepatu & Audio",
+        "Tas, Jam Tangan, Sepatu, Makanan Instan, Speaker",
         9.00
     ),
     KESEHATAN(
-        "Obat / Permen / Keamanan Bayi",
+        "Kesehatan, Buku & Hobi",
+        "Obat, Snack, Buku Bacaan, Kamera, Gaming, Hewan",
         9.50
     ),
     FASHION_ATAS(
-        "Pakaian Muslim / Snack / Mainan",
+        "Pakaian Muslim, Perkakas & Buku Majalah",
+        "Pakaian Muslim, Kaos Kaki, Hand Sanitizer, Kelistrikan, Perkakas",
         10.00
     );
 
-    /** Contoh label singkat untuk ditampilkan: "Atasan / Mukena / Aksesoris — 8.25%" */
+    /** Label + contoh produk untuk ditampilkan di dropdown. */
     val labelLengkap: String
         get() = "$label — ${formatPersen(persen)}"
 

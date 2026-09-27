@@ -24,8 +24,7 @@ class CalculatorEngineTest {
             diskonPersen = 25,
             kategoriFee = KategoriFee.FASHION_BAWAH, // 8.25%
             promoXtraPersen = 4.5,
-            shippingSaver = 350,
-            premium = 5_000
+            pakaiShippingSaver = true
         )!!
 
         assertEquals(82_500, hasil.commissionFee)   // Commission Fee
@@ -85,10 +84,11 @@ class CalculatorEngineTest {
 
         assertEquals(10_000, hasil.commissionFee)
         assertEquals(1_250, hasil.prosesFee)
-        assertEquals(11_250, hasil.platformFee)
+        assertEquals(500, hasil.premiumFee)       // 0,5% x 100.000
+        assertEquals(11_750, hasil.platformFee + hasil.premiumFee)
         assertEquals(0, hasil.promoXtraFee)
-        assertEquals(11_250, hasil.totalPotongan)
-        assertEquals(88_750, hasil.penghasilanBersih)
+        assertEquals(11_750, hasil.totalPotongan)
+        assertEquals(88_250, hasil.penghasilanBersih)
     }
 
     // ── C. Semua 9 tier fee ────────────────────────────────────────────────
@@ -126,24 +126,34 @@ class CalculatorEngineTest {
     // ── D. Biaya tambahan opsional ─────────────────────────────────────────
 
     @Test
-    fun `biaya tambahan opsional menambah total potongan`() {
+    fun `toggle shipping saver menambah total potongan sebesar 350`() {
         val base = CalculatorEngine.hitungDariHargaAwal(
             hargaAwal = 100_000,
             diskonPersen = 0,
             kategoriFee = KategoriFee.FASHION_BAWAH,
             promoXtraPersen = 0.0
         )!!
-        val withExtra = CalculatorEngine.hitungDariHargaAwal(
+        val withSaver = CalculatorEngine.hitungDariHargaAwal(
             hargaAwal = 100_000,
             diskonPersen = 0,
             kategoriFee = KategoriFee.FASHION_BAWAH,
             promoXtraPersen = 0.0,
-            shippingSaver = 350,
-            premium = 5_000
+            pakaiShippingSaver = true
         )!!
 
-        assertEquals(base.totalPotongan + 5_350, withExtra.totalPotongan)
-        assertEquals(base.penghasilanBersih - 5_350, withExtra.penghasilanBersih)
+        assertEquals(base.totalPotongan + 350, withSaver.totalPotongan)
+        assertEquals(base.penghasilanBersih - 350, withSaver.penghasilanBersih)
+    }
+
+    @Test
+    fun `premium selalu aktif - 0_5 persen dari harga`() {
+        // Premium SELALU dipotong Shopee, 0,5% dari harga produk.
+        val hasil = CalculatorEngine.hitungDariHargaAwal(
+            hargaAwal = 200_000,
+            diskonPersen = 0,
+            kategoriFee = KategoriFee.KHUSUS // 2,5%
+        )!!
+        assertEquals(1_000, hasil.premiumFee) // 200.000 x 0,5%
     }
 
     // ── E. Mode Target Harga ───────────────────────────────────────────────
@@ -159,8 +169,9 @@ class CalculatorEngineTest {
 
         assertEquals(1_000_000L, hasil.hargaWajibPasang)
         assertEquals(82_500L, hasil.commissionFee)
-        // net = 1.000.000 - (82.500 + 1.250) = 916.250
-        assertEquals(916_250L, hasil.penghasilanBersih)
+        assertEquals(5_000L, hasil.premiumFee)
+        // net = 1.000.000 - (82.500 + 1.250 + 5.000) = 911.250
+        assertEquals(911_250L, hasil.penghasilanBersih)
     }
 
     @Test
@@ -217,8 +228,7 @@ class CalculatorEngineTest {
             diskonPersen = 30,
             kategoriFee = KategoriFee.TAS_JAM,
             promoXtraPersen = 4.5,
-            shippingSaver = 350,
-            premium = 5_000
+            pakaiShippingSaver = true
         )!!
         assertEquals(harga - hasil.totalPotongan, hasil.penghasilanBersih)
     }
