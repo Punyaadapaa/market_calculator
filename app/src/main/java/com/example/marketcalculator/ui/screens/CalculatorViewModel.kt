@@ -1,15 +1,23 @@
 package com.example.marketcalculator.ui.screens
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.CalculatorEngine
 import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
 import com.example.marketcalculator.data.PROMO_XTRA_DEFAULT_PERCENT
+import com.example.marketcalculator.data.RiwayatEntri
+import com.example.marketcalculator.data.RiwayatRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class CalculatorUiState(
     val mode: CalcMode = CalcMode.HARGA_JUAL,
@@ -35,8 +43,18 @@ data class CalculatorUiState(
 )
 
 class CalculatorViewModel(
+    application: Application,
     private val savedState: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    private val riwayatRepo = RiwayatRepository(application)
+
+    /** Daftar riwayat (terbaru di depan), otomatis update dari DataStore. */
+    val riwayat: StateFlow<List<RiwayatEntri>> = riwayatRepo.riwayat.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList()
+    )
 
     var uiState by mutableStateOf(muatStateAwal())
         private set
@@ -150,6 +168,76 @@ class CalculatorViewModel(
         val kosong = CalculatorUiState()
         uiState = terapkan(kosong.copy(hasil = HasilKalkulasi()))
     }
+
+    // ── Riwayat ──────────────────────────────────────────────
+
+    /** Simpan perhitungan saat ini ke riwayat (dipanggil user). */
+    fun simpanKeRiwayat() {
+        val s = uiState
+        val h = s.hasil
+        if (h.totalPotongan == 0L && h.penghasilanBersih == 0L) return // belum ada hitungan
+        val entri = RiwayatEntri(
+            id = System.currentTimeMillis(),
+            mode = s.mode.name,
+            kategoriNama = s.kategoriFee.label,
+            hargaAwal = when (s.mode) {
+                CalcMode.HARGA_JUAL -> s.hargaAwal.toLongOrNull() ?: 0L
+                CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
+            },
+            diskonPersen = when (s.mode) {
+                CalcMode.HARGA_JUAL -> s.diskonPersenHargaJual.toIntOrNull() ?: 0
+                CalcMode.TARGET_HARGA -> s.diskonPersen.toIntOrNull() ?: 0
+            },
+            promoXtraPersen = s.promoXtraPersen.toDoubleOrNull() ?: 0.0,
+            promoXtraAktif = promoXtraAktif(s),
+            shippingSaver = s.shippingSaver.toLongOrNull() ?: 0L,
+            premium = s.premium.toLongOrNull() ?: 0L,
+            persenFee = h.persenFeeAktif,
+            commissionFee = h.commissionFee,
+            prosesFee = h.prosesFee,
+            promoXtraFee = h.promoXtraFee,
+            shippingSaverFee = h.shippingSaverFee,
+            premiumFee = h.premiumFee,
+            totalPotongan = h.totalPotongan,
+            penghasilanBersih = h.penghasilanBersih,
+            hargaWajibPasang = h.hargaWajibPasang,
+            hargaSetelahDiskon = h.hargaSetelahDiskon
+        )
+        viewModelScope.launch { riwayatRepo.tambah(entri) }
+    }
+
+    fun hapusRiwayat(id: Long) {
+        viewModelScope.launch { riwayatRepo.hapus(id) }
+    }
+
+    fun hapusSemuaRiwayat() {
+        viewModelScope.launch { riwayatRepo.hapusSemua() }
+    }
+
+    /** Muat entri riwayat kembali ke kalkulator untuk dihitung ulang/diubah. */
+    fun muatDariRiwayat(entri: RiwayatEntri) {
+        val mode = runCatching { CalcMode.valueOf(entri.mode) }.getOrDefault(CalcMode.HARGA_JUAL)
+        val kategori = KategoriFee.entries.firstOrNull { it.label == entri.kategoriNama }
+            ?: uiState.kategoriFee
+        val dasar = CalculatorUiState(
+            mode = mode,
+            hargaAwal = if (mode == CalcMode.HARGA_JUAL) entri.hargaAwal.toString() else uiState.hargaAwal,
+            diskonPersenHargaJual = if (mode == CalcMode.HARGA_JUAL) entri.diskonPersen.toString() else uiState.diskonPersenHargaJual,
+            pakaiPromoXtraHargaJual = if (mode == CalcMode.HARGA_JUAL) entri.promoXtraAktif else uiState.pakaiPromoXtraHargaJual,
+            targetHarga = if (mode == CalcMode.TARGET_HARGA) entri.hargaAwal.toString() else uiState.targetHarga,
+            diskonPersen = if (mode == CalcMode.TARGET_HARGA) entri.diskonPersen.toString() else uiState.diskonPersen,
+            pakaiPromoXtraTarget = if (mode == CalcMode.TARGET_HARGA) entri.promoXtraAktif else uiState.pakaiPromoXtraTarget,
+            kategoriFee = kategori,
+            promoXtraPersen = trimAngkaDesimal(entri.promoXtraPersen),
+            shippingSaver = if (entri.shippingSaver > 0) entri.shippingSaver.toString() else "",
+            premium = if (entri.premium > 0) entri.premium.toString() else ""
+        )
+        uiState = terapkan(dasar)
+    }
+
+    /** 4.5 -> "4.5", 4.0 -> "4" (biar field-nya rapi). */
+    private fun trimAngkaDesimal(nilai: Double): String =
+        if (nilai % 1.0 == 0.0) nilai.toInt().toString() else nilai.toString()
 
     private fun promoXtraAktif(state: CalculatorUiState): Boolean = when (state.mode) {
         CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual
