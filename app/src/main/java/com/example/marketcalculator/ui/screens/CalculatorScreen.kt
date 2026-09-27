@@ -591,7 +591,7 @@ private fun PromoXtraRow(
     persen: String,
     onPersenChange: (String) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
@@ -601,40 +601,56 @@ private fun PromoXtraRow(
                 else
                     MaterialTheme.colorScheme.surfaceContainerHigh
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Percent,
-            contentDescription = null,
-            tint = if (checked)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "Biaya Promo XTRA",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(Modifier.height(1.dp))
-            Text(
-                if (checked) "Aktif — persen dari harga awal" else "Nonaktif",
-                style = MaterialTheme.typography.bodySmall,
-                color = if (checked)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Percent,
+                contentDescription = null,
+                tint = if (checked)
                     MaterialTheme.colorScheme.primary
                 else
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Biaya Promo XTRA",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.height(1.dp))
+                Text(
+                    if (checked) "Aktif — persen dari harga awal" else "Nonaktif",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (checked)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
+        // Field persen ditaruh di baris terpisah supaya tidak terpotong saat
+        // font scale besar (mis. 1.3): lebar mengikuti layar, bukan fixed 96dp.
         if (checked) {
+            Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = persen,
                 onValueChange = onPersenChange,
+                label = { Text("Persen Promo XTRA") },
                 suffix = { Text("%") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -643,18 +659,9 @@ private fun PromoXtraRow(
                 ),
                 shape = RoundedCornerShape(10.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.tabularNums(),
-                modifier = Modifier.width(96.dp)
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.width(8.dp))
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
-            )
-        )
     }
 }
 
