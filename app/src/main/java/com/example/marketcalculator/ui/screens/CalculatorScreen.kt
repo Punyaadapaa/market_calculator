@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -355,7 +357,13 @@ private fun HargaJualForm(
             isError = pesanError != null,
             supportingText = {
                 if (pesanError != null) {
-                    Text(pesanError, color = MaterialTheme.colorScheme.error)
+                    Text(
+                        pesanError,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                        }
+                    )
                 }
             },
             shape = RoundedCornerShape(12.dp),
@@ -403,7 +411,13 @@ private fun TargetHargaForm(
             isError = pesanError != null,
             supportingText = {
                 if (pesanError != null) {
-                    Text(pesanError, color = MaterialTheme.colorScheme.error)
+                    Text(
+                        pesanError,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                        }
+                    )
                 }
             },
             shape = RoundedCornerShape(12.dp),
