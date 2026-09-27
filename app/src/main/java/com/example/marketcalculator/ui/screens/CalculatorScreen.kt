@@ -18,15 +18,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.TrendingDown
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Calculate
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Percent
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -48,7 +45,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marketcalculator.BuildConfig
@@ -139,10 +135,8 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     onPromoXtraToggle = viewModel::onPromoXtraToggle,
                     promoXtraPersen = uiState.promoXtraPersen,
                     onPromoXtraPersenChange = viewModel::onPromoXtraPersenChange,
-                    shippingSaver = uiState.shippingSaver,
-                    onShippingSaverChange = viewModel::onShippingSaverChange,
-                    premium = uiState.premium,
-                    onPremiumChange = viewModel::onPremiumChange
+                    pakaiShippingSaver = uiState.pakaiShippingSaver,
+                    onShippingSaverToggle = viewModel::onShippingSaverToggle
                 )
 
                 // ── Section Label: Hasil ──
@@ -154,8 +148,7 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                 // ── Ringkasan Hasil ──
                 RingkasanCard(
                     hasil = uiState.hasil,
-                    onReset = viewModel::onReset,
-                    onSimpan = viewModel::simpanKeRiwayat
+                    onReset = viewModel::onReset
                 )
 
                 // ── Riwayat Perhitungan ──
@@ -166,9 +159,6 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     onHapus = viewModel::hapusRiwayat,
                     onHapusSemua = viewModel::hapusSemuaRiwayat
                 )
-
-                // ── Info Footer ──
-                InfoFooter()
 
                 // ── Versi app (dari BuildConfig, otomatis dari build.gradle) ──
                 VersionFooter()
@@ -234,20 +224,12 @@ private fun HeaderSection() {
             )
         }
         Spacer(Modifier.width(14.dp))
-        Column {
-            Text(
-                "Kalkulator Seller",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                "Hitung potongan & penghasilan bersih Shopee",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(
+            "Kalkulator Seller",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -343,12 +325,9 @@ private fun HargaJualForm(
     onDiskonChange: (String) -> Unit,
     pesanError: String?
 ) {
-    FormCard(
-        title = "Informasi Harga",
-        subtitle = "Masukkan harga produk yang dipasang di Shopee"
-    ) {
+    FormCard(title = "Harga Produk") {
         RupiahField(
-            label = "Harga Produk (Sebelum Diskon)",
+            label = "Harga Sebelum Diskon",
             value = hargaAwal,
             onValueChange = onHargaAwalChange,
             icon = Icons.Outlined.Payments
@@ -397,12 +376,9 @@ private fun TargetHargaForm(
     onDiskonChange: (String) -> Unit,
     pesanError: String?
 ) {
-    FormCard(
-        title = "Target Pembeli",
-        subtitle = "Harga yang ingin dibayar pembeli setelah diskon"
-    ) {
+    FormCard(title = "Target Pembeli") {
         RupiahField(
-            label = "Target Harga Setelah Diskon",
+            label = "Harga Dibayar Pembeli",
             value = targetHarga,
             onValueChange = onTargetHargaChange,
             icon = Icons.Outlined.ShoppingCart
@@ -446,7 +422,6 @@ private fun TargetHargaForm(
 @Composable
 private fun FormCard(
     title: String,
-    subtitle: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -460,26 +435,12 @@ private fun FormCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Card header
-            Column {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 0.5.dp
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
             )
-
             content()
         }
     }
@@ -521,15 +482,10 @@ private fun BiayaTambahanCard(
     onPromoXtraToggle: (Boolean) -> Unit,
     promoXtraPersen: String,
     onPromoXtraPersenChange: (String) -> Unit,
-    shippingSaver: String,
-    onShippingSaverChange: (String) -> Unit,
-    premium: String,
-    onPremiumChange: (String) -> Unit
+    pakaiShippingSaver: Boolean,
+    onShippingSaverToggle: (Boolean) -> Unit
 ) {
-    FormCard(
-        title = "Biaya Shopee",
-        subtitle = "Kategori menentukan fee admin; biaya lain opsional"
-    ) {
+    FormCard(title = "Biaya Shopee") {
         KategoriDropdown(
             kategori = kategori,
             onKategoriChange = onKategoriChange
@@ -542,18 +498,66 @@ private fun BiayaTambahanCard(
             onPersenChange = onPromoXtraPersenChange
         )
 
-        RupiahField(
-            label = "Shipping Fee Saver (opsional)",
-            value = shippingSaver,
-            onValueChange = onShippingSaverChange,
-            icon = Icons.Outlined.LocalShipping
+        ToggleRow(
+            checked = pakaiShippingSaver,
+            onCheckedChange = onShippingSaverToggle,
+            icon = Icons.Outlined.LocalShipping,
+            judul = "Shipping Fee Saver",
+            keterangan = "Rp350 per pesanan"
         )
+    }
+}
 
-        RupiahField(
-            label = "Premium (opsional)",
-            value = premium,
-            onValueChange = onPremiumChange,
-            icon = Icons.Outlined.Star
+/** Baris toggle sederhana: ikon + judul + keterangan opsional + Switch. */
+@Composable
+private fun ToggleRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    icon: ImageVector,
+    judul: String,
+    keterangan: String? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (checked) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHigh
+            )
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (checked) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            judul,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        if (keterangan != null) {
+            Text(
+                keterangan,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+            )
         )
     }
 }
@@ -647,23 +651,13 @@ private fun PromoXtraRow(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "Biaya Promo XTRA",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(1.dp))
-                Text(
-                    if (checked) "Aktif — persen dari harga awal" else "Nonaktif",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (checked)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                "Promo XTRA",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f)
+            )
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
@@ -673,8 +667,7 @@ private fun PromoXtraRow(
                 )
             )
         }
-        // Field persen ditaruh di baris terpisah supaya tidak terpotong saat
-        // font scale besar (mis. 1.3): lebar mengikuti layar, bukan fixed 96dp.
+        // Field persen di baris sendiri (aman saat font scale besar).
         if (checked) {
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
@@ -702,8 +695,7 @@ private fun PromoXtraRow(
 @Composable
 private fun RingkasanCard(
     hasil: HasilKalkulasi,
-    onReset: () -> Unit,
-    onSimpan: () -> Unit
+    onReset: () -> Unit
 ) {
     val kosong = hasil.totalPotongan == 0L && hasil.penghasilanBersih == 0L &&
         hasil.hargaWajibPasang == null && hasil.hargaSetelahDiskon == null
@@ -722,10 +714,9 @@ private fun RingkasanCard(
             if (kosong) {
                 EmptyHasil()
             } else {
-                // Hasil utama (harga wajib pasang / harga dibayar pembeli) — tonal, tanpa gradient
+                // Hasil utama (harga wajib pasang / harga dibayar pembeli)
                 HasilUtamaPanel(hasil)
 
-                // ── Rincian Potongan ──
                 Text(
                     "Rincian Potongan",
                     style = MaterialTheme.typography.titleSmall,
@@ -734,40 +725,21 @@ private fun RingkasanCard(
                 )
 
                 DetailRow(
-                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
                     label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
-                    amount = hasil.commissionFee,
-                    color = MaterialTheme.colorScheme.error
+                    amount = hasil.commissionFee
                 )
                 DetailRow(
-                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
                     label = "Biaya Proses Pesanan",
-                    amount = hasil.prosesFee,
-                    color = MaterialTheme.colorScheme.error
+                    amount = hasil.prosesFee
                 )
                 if (hasil.promoXtraFee > 0) {
-                    DetailRow(
-                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                        label = "Biaya Promo XTRA",
-                        amount = hasil.promoXtraFee,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    DetailRow(label = "Promo XTRA", amount = hasil.promoXtraFee)
                 }
                 if (hasil.shippingSaverFee > 0) {
-                    DetailRow(
-                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                        label = "Shipping Fee Saver",
-                        amount = hasil.shippingSaverFee,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    DetailRow(label = "Shipping Fee Saver", amount = hasil.shippingSaverFee)
                 }
                 if (hasil.premiumFee > 0) {
-                    DetailRow(
-                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                        label = "Premium",
-                        amount = hasil.premiumFee,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    DetailRow(label = "Premium", amount = hasil.premiumFee)
                 }
 
                 HorizontalDivider(
@@ -776,37 +748,17 @@ private fun RingkasanCard(
                 )
 
                 DetailRow(
-                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
                     label = "Total Potongan",
                     amount = hasil.totalPotongan,
-                    color = MaterialTheme.colorScheme.error,
                     bold = true
                 )
 
                 Spacer(Modifier.height(2.dp))
 
-                // Penghasilan Bersih — panel tonal, warna ikut tanda (rugi = error)
                 PenghasilanPanel(hasil.penghasilanBersih)
             }
 
             Spacer(Modifier.height(2.dp))
-
-            // Simpan ke riwayat (hanya kalau sudah ada hasil)
-            if (!kosong) {
-                Button(
-                    onClick = onSimpan,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        Icons.Outlined.History,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text("Simpan ke Riwayat", style = MaterialTheme.typography.labelLarge)
-                }
-            }
 
             // Reset — selalu terlihat, tidak perlu scroll jauh
             OutlinedButton(
@@ -988,10 +940,8 @@ private fun PenghasilanPanel(penghasilan: Long) {
 
 @Composable
 private fun DetailRow(
-    icon: ImageVector,
     label: String,
     amount: Long,
-    color: Color,
     bold: Boolean = false
 ) {
     Row(
@@ -1001,28 +951,17 @@ private fun DetailRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (bold) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color.copy(alpha = 0.7f),
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (bold) FontWeight.SemiBold else FontWeight.Normal
-            )
-        }
+        )
         Text(
             formatRupiah(amount, tanda = true),
             style = MaterialTheme.typography.bodyMedium.tabularNums(),
-            color = color,
+            color = MaterialTheme.colorScheme.error,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -1031,33 +970,6 @@ private fun DetailRow(
 // ═══════════════════════════════════════════════════════════
 // INFO FOOTER
 // ═══════════════════════════════════════════════════════════
-
-@Composable
-private fun InfoFooter() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(12.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Info,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(14.dp).padding(top = 1.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            "Fee admin dihitung dari harga sebelum diskon (voucher ditanggung Shopee) " +
-                "sesuai kategori produk, ditambah biaya proses pesanan Rp1.250.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 16.sp
-        )
-    }
-}
 
 @Composable
 private fun VersionFooter() {

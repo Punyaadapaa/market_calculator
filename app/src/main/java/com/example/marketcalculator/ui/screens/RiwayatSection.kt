@@ -241,10 +241,10 @@ private fun RiwayatDetailDialog(
                     DetailBaris("Promo XTRA", "${formatPersenRingkas(entri.promoXtraPersen)} · ${formatRupiah(entri.promoXtraFee)}")
                 }
                 if (entri.shippingSaverFee > 0) {
-                    DetailBaris("Shipping Saver", formatRupiah(entri.shippingSaverFee))
+                    DetailBaris("Shipping Fee Saver", formatRupiah(entri.shippingSaverFee))
                 }
                 if (entri.premiumFee > 0) {
-                    DetailBaris("Premium", formatRupiah(entri.premiumFee))
+                    DetailBaris("Premium (0,5%)", formatRupiah(entri.premiumFee))
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 DetailBaris("Total potongan", formatRupiah(entri.totalPotongan))
