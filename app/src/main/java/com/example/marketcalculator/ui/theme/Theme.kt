@@ -17,6 +17,8 @@ private val KalkulatorDarkColorScheme = darkColorScheme(
 
     secondary = ProfitGreen,
     onSecondary = OnProfitGreen,
+    secondaryContainer = ProfitGreenContainer,
+    onSecondaryContainer = OnProfitGreenContainer,
 
     tertiary = AccentBlue,
 
@@ -38,7 +40,8 @@ private val KalkulatorDarkColorScheme = darkColorScheme(
 
     error = ErrorRed,
     onError = OnErrorDark,
-    errorContainer = ErrorContainer
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainerDark
 )
 
 @Composable

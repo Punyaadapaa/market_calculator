@@ -1,18 +1,14 @@
 package com.example.marketcalculator.ui.screens
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -167,15 +162,15 @@ private fun SectionLabel(icon: ImageVector, title: String) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.size(16.dp)
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
         )
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(8.dp))
         Text(
-            title.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            letterSpacing = 1.sp
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -186,56 +181,42 @@ private fun SectionLabel(icon: ImageVector, title: String) {
 
 @Composable
 private fun HeaderSection() {
-    Box(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                        Color.Transparent
-                    )
-                )
-            )
             .padding(horizontal = 20.dp, vertical = 24.dp)
             .statusBarsPadding()
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Icon bulat dengan double ring
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .border(
-                        width = 1.5.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        shape = CircleShape
-                    )
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Storefront,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-            Spacer(Modifier.width(14.dp))
-            Column {
-                Text(
-                    "Kalkulator Seller",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "Hitung potongan & penghasilan bersih Shopee",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        // Ikon bulat sederhana (tanpa double ring / gradient)
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Storefront,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(
+                "Kalkulator Seller",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "Hitung potongan & penghasilan bersih Shopee",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -250,12 +231,7 @@ private fun ModeSelector(mode: CalcMode, onModeChange: (CalcMode) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(14.dp)
-            )
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -427,7 +403,7 @@ private fun FormCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
@@ -452,7 +428,7 @@ private fun FormCard(
             }
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 0.5.dp
             )
 
@@ -599,9 +575,9 @@ private fun PromoXtraRow(
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (checked)
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                    MaterialTheme.colorScheme.primaryContainer
                 else
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    MaterialTheme.colorScheme.surfaceContainerHigh
             )
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -662,9 +638,12 @@ private fun PromoXtraRow(
 
 @Composable
 private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
+    val kosong = hasil.totalPotongan == 0L && hasil.penghasilanBersih == 0L &&
+        hasil.hargaWajibPasang == null && hasil.hargaSetelahDiskon == null
+
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
@@ -673,236 +652,79 @@ private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Harga Wajib Pasang (hanya muncul di mode Target)
-            AnimatedVisibility(
-                visible = hasil.hargaWajibPasang != null,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                if (hasil.hargaWajibPasang != null) {
-                    Column {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.04f)
-                                        )
-                                    )
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .padding(14.dp)
-                        ) {
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Storefront,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        "HARGA WAJIB PASANG DI SHOPEE",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        letterSpacing = 0.8.sp
-                                    )
-                                }
-                                Spacer(Modifier.height(6.dp))
-                                Text(
-                                    formatRupiah(hasil.hargaWajibPasang),
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                    }
-                }
-            }
+            if (kosong) {
+                EmptyHasil()
+            } else {
+                // Hasil utama (harga wajib pasang / harga dibayar pembeli) — tonal, tanpa gradient
+                HasilUtamaPanel(hasil)
 
-            // Harga Setelah Diskon (hanya muncul di mode Harga Jual + diskon > 0)
-            AnimatedVisibility(
-                visible = hasil.hargaSetelahDiskon != null,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                if (hasil.hargaSetelahDiskon != null) {
-                    Column {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f),
-                                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.03f)
-                                        )
-                                    )
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .padding(14.dp)
-                        ) {
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.ShoppingCart,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        "HARGA YANG DIBAYAR PEMBELI",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        letterSpacing = 0.8.sp
-                                    )
-                                }
-                                Spacer(Modifier.height(6.dp))
-                                Text(
-                                    formatRupiah(hasil.hargaSetelahDiskon),
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.End
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                    }
-                }
-            }
+                // ── Rincian Potongan ──
+                Text(
+                    "Rincian Potongan",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-            // ── Rincian Potongan ──
-            Text(
-                "RINCIAN POTONGAN",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 0.8.sp
-            )
-
-            DetailRow(
-                icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
-                amount = hasil.commissionFee,
-                color = MaterialTheme.colorScheme.error
-            )
-            DetailRow(
-                icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                label = "Biaya Proses Pesanan",
-                amount = hasil.prosesFee,
-                color = MaterialTheme.colorScheme.error
-            )
-            if (hasil.promoXtraFee > 0) {
                 DetailRow(
                     icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                    label = "Biaya Promo XTRA",
-                    amount = hasil.promoXtraFee,
+                    label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
+                    amount = hasil.commissionFee,
                     color = MaterialTheme.colorScheme.error
                 )
-            }
-            if (hasil.shippingSaverFee > 0) {
                 DetailRow(
                     icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                    label = "Shipping Fee Saver",
-                    amount = hasil.shippingSaverFee,
+                    label = "Biaya Proses Pesanan",
+                    amount = hasil.prosesFee,
                     color = MaterialTheme.colorScheme.error
                 )
-            }
-            if (hasil.premiumFee > 0) {
-                DetailRow(
-                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                    label = "Premium",
-                    amount = hasil.premiumFee,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 0.5.dp
-            )
-
-            DetailRow(
-                icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                label = "Total Potongan",
-                amount = hasil.totalPotongan,
-                color = MaterialTheme.colorScheme.error,
-                bold = true
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            // Penghasilan Bersih — Hero section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.04f)
-                            )
-                        )
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.TrendingUp,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            "PENGHASILAN BERSIH",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.secondary,
-                            letterSpacing = 0.8.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        formatRupiah(hasil.penghasilanBersih),
-                        style = MaterialTheme.typography.displayLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End
+                if (hasil.promoXtraFee > 0) {
+                    DetailRow(
+                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                        label = "Biaya Promo XTRA",
+                        amount = hasil.promoXtraFee,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
+                if (hasil.shippingSaverFee > 0) {
+                    DetailRow(
+                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                        label = "Shipping Fee Saver",
+                        amount = hasil.shippingSaverFee,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                if (hasil.premiumFee > 0) {
+                    DetailRow(
+                        icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                        label = "Premium",
+                        amount = hasil.premiumFee,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = 0.5.dp
+                )
+
+                DetailRow(
+                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                    label = "Total Potongan",
+                    amount = hasil.totalPotongan,
+                    color = MaterialTheme.colorScheme.error,
+                    bold = true
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                // Penghasilan Bersih — panel tonal, warna ikut tanda (rugi = error)
+                PenghasilanPanel(hasil.penghasilanBersih)
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
 
-            // Reset button
+            // Reset — selalu terlihat, tidak perlu scroll jauh
             OutlinedButton(
                 onClick = onReset,
                 modifier = Modifier.fillMaxWidth(),
@@ -920,6 +742,158 @@ private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
                 Spacer(Modifier.width(6.dp))
                 Text("Reset Kalkulator", style = MaterialTheme.typography.labelLarge)
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyHasil() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Calculate,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(32.dp)
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Isi harga di atas",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            "Hasil dan rincian potongan akan muncul di sini.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun HasilUtamaPanel(hasil: HasilKalkulasi) {
+    when {
+        hasil.hargaWajibPasang != null -> {
+            NilaiPanel(
+                label = "Harga wajib pasang di Shopee",
+                nilai = formatRupiah(hasil.hargaWajibPasang),
+                warna = MaterialTheme.colorScheme.primary,
+                icon = Icons.Outlined.Storefront,
+                container = MaterialTheme.colorScheme.primaryContainer,
+                onContainer = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        hasil.hargaSetelahDiskon != null -> {
+            NilaiPanel(
+                label = "Harga yang dibayar pembeli",
+                nilai = formatRupiah(hasil.hargaSetelahDiskon),
+                warna = MaterialTheme.colorScheme.tertiary,
+                icon = Icons.Outlined.ShoppingCart,
+                container = MaterialTheme.colorScheme.surfaceContainerHigh,
+                onContainer = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+/**
+ * Panel nilai (solid tonal, tanpa gradient/border). Dipakai untuk hasil utama.
+ */
+@Composable
+private fun NilaiPanel(
+    label: String,
+    nilai: String,
+    warna: Color,
+    icon: ImageVector,
+    container: Color,
+    onContainer: Color
+) {
+    Surface(
+        color = container,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = warna,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onContainer
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                nilai,
+                style = MaterialTheme.typography.displayLarge,
+                color = warna,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+        }
+    }
+}
+
+/**
+ * Panel penghasilan bersih. WAJIB berubah warna saat rugi (negatif) —
+ * jangan pernah tampilkan angka negatif dengan warna profit.
+ */
+@Composable
+private fun PenghasilanPanel(penghasilan: Long) {
+    val rugi = penghasilan < 0
+    val warna = if (rugi) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+    val container = if (rugi) MaterialTheme.colorScheme.errorContainer
+    else MaterialTheme.colorScheme.secondaryContainer
+    val onContainer = if (rugi) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSecondaryContainer
+    val icon = if (rugi) Icons.AutoMirrored.Outlined.TrendingDown
+    else Icons.AutoMirrored.Outlined.TrendingUp
+    val label = if (rugi) "RUGI — hasil di bawah nol" else "Penghasilan bersih"
+
+    Surface(
+        color = container,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = warna,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onContainer,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                formatRupiah(penghasilan),
+                style = MaterialTheme.typography.displayLarge,
+                color = warna,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
         }
     }
 }
@@ -986,7 +960,7 @@ private fun InfoFooter() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(12.dp),
         verticalAlignment = Alignment.Top
     ) {

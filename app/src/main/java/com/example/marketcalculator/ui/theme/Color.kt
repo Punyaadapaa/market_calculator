@@ -38,12 +38,15 @@ val PrimaryContainerDark  = Color(0xFF5C2D00)  // Container primary
 // ═══════════════════════════════════════════════
 val ProfitGreen    = Color(0xFF3FB950)  // Hijau profit (GitHub green)
 val OnProfitGreen  = Color(0xFF0A2E10)  // Teks gelap di atas hijau
+val ProfitGreenContainer = Color(0xFF12351B)     // Background panel penghasilan bersih
+val OnProfitGreenContainer = Color(0xFF7EE787)   // Teks/angka di atas container hijau
 
 // ═══════════════════════════════════════════════
 // Error — Merah lembut, buat potongan & peringatan
 // ═══════════════════════════════════════════════
 val ErrorRed       = Color(0xFFF85149)  // Merah error (GitHub red)
 val ErrorContainer = Color(0xFF3D1418)  // Container error
+val OnErrorContainerDark = Color(0xFFFF9C94)  // Teks/angka di atas container error
 val OnErrorDark    = Color(0xFF2A0608)  // Teks gelap di atas merah
 
 // ═══════════════════════════════════════════════
