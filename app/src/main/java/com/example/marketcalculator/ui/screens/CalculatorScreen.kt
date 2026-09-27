@@ -23,16 +23,20 @@ import androidx.compose.material.icons.automirrored.outlined.TrendingDown
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Percent
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.RestartAlt
-import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.HasilKalkulasi
+import com.example.marketcalculator.data.KategoriFee
+import com.example.marketcalculator.data.formatPersen
 import com.example.marketcalculator.ui.util.ThousandsSeparatorTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,8 +102,6 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                             onHargaAwalChange = viewModel::onHargaAwalChange,
                             diskonPersen = uiState.diskonPersenHargaJual,
                             onDiskonChange = viewModel::onDiskonHargaJualChange,
-                            pakaiAsuransi = uiState.pakaiAsuransi,
-                            onAsuransiChange = viewModel::onAsuransiChange,
                             pesanError = uiState.pesanError
                         )
                         CalcMode.TARGET_HARGA -> TargetHargaForm(
@@ -105,12 +109,32 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                             onTargetHargaChange = viewModel::onTargetHargaChange,
                             diskonPersen = uiState.diskonPersen,
                             onDiskonChange = viewModel::onDiskonChange,
-                            pakaiAsuransi = uiState.pakaiAsuransi,
-                            onAsuransiChange = viewModel::onAsuransiChange,
                             pesanError = uiState.pesanError
                         )
                     }
                 }
+
+                // ── Section Label: Kategori & Biaya Tambahan ──
+                SectionLabel(
+                    icon = Icons.Outlined.Storefront,
+                    title = "Kategori & Biaya Tambahan"
+                )
+
+                BiayaTambahanCard(
+                    kategori = uiState.kategoriFee,
+                    onKategoriChange = viewModel::onKategoriChange,
+                    promoXtraAktif = if (uiState.mode == CalcMode.HARGA_JUAL)
+                        uiState.pakaiPromoXtraHargaJual
+                    else
+                        uiState.pakaiPromoXtraTarget,
+                    onPromoXtraToggle = viewModel::onPromoXtraToggle,
+                    promoXtraPersen = uiState.promoXtraPersen,
+                    onPromoXtraPersenChange = viewModel::onPromoXtraPersenChange,
+                    shippingSaver = uiState.shippingSaver,
+                    onShippingSaverChange = viewModel::onShippingSaverChange,
+                    premium = uiState.premium,
+                    onPremiumChange = viewModel::onPremiumChange
+                )
 
                 // ── Section Label: Hasil ──
                 SectionLabel(
@@ -313,8 +337,6 @@ private fun HargaJualForm(
     onHargaAwalChange: (String) -> Unit,
     diskonPersen: String,
     onDiskonChange: (String) -> Unit,
-    pakaiAsuransi: Boolean,
-    onAsuransiChange: (Boolean) -> Unit,
     pesanError: String?
 ) {
     FormCard(
@@ -350,7 +372,6 @@ private fun HargaJualForm(
             textStyle = MaterialTheme.typography.titleMedium,
             modifier = Modifier.fillMaxWidth()
         )
-        AsuransiRow(checked = pakaiAsuransi, onCheckedChange = onAsuransiChange)
     }
 }
 
@@ -360,8 +381,6 @@ private fun TargetHargaForm(
     onTargetHargaChange: (String) -> Unit,
     diskonPersen: String,
     onDiskonChange: (String) -> Unit,
-    pakaiAsuransi: Boolean,
-    onAsuransiChange: (Boolean) -> Unit,
     pesanError: String?
 ) {
     FormCard(
@@ -397,7 +416,6 @@ private fun TargetHargaForm(
             textStyle = MaterialTheme.typography.titleMedium,
             modifier = Modifier.fillMaxWidth()
         )
-        AsuransiRow(checked = pakaiAsuransi, onCheckedChange = onAsuransiChange)
     }
 }
 
@@ -468,7 +486,113 @@ private fun RupiahField(
 }
 
 @Composable
-private fun AsuransiRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+private fun BiayaTambahanCard(
+    kategori: KategoriFee,
+    onKategoriChange: (KategoriFee) -> Unit,
+    promoXtraAktif: Boolean,
+    onPromoXtraToggle: (Boolean) -> Unit,
+    promoXtraPersen: String,
+    onPromoXtraPersenChange: (String) -> Unit,
+    shippingSaver: String,
+    onShippingSaverChange: (String) -> Unit,
+    premium: String,
+    onPremiumChange: (String) -> Unit
+) {
+    FormCard(
+        title = "Biaya Shopee",
+        subtitle = "Kategori menentukan fee admin; biaya lain opsional"
+    ) {
+        KategoriDropdown(
+            kategori = kategori,
+            onKategoriChange = onKategoriChange
+        )
+
+        PromoXtraRow(
+            checked = promoXtraAktif,
+            onCheckedChange = onPromoXtraToggle,
+            persen = promoXtraPersen,
+            onPersenChange = onPromoXtraPersenChange
+        )
+
+        RupiahField(
+            label = "Shipping Fee Saver (opsional)",
+            value = shippingSaver,
+            onValueChange = onShippingSaverChange,
+            icon = Icons.Outlined.LocalShipping
+        )
+
+        RupiahField(
+            label = "Premium (opsional)",
+            value = premium,
+            onValueChange = onPremiumChange,
+            icon = Icons.Outlined.Star
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun KategoriDropdown(
+    kategori: KategoriFee,
+    onKategoriChange: (KategoriFee) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = kategori.label,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Kategori Produk") },
+            leadingIcon = {
+                Icon(
+                    Icons.Outlined.Storefront,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            supportingText = { Text("Fee admin: ${formatPersen(kategori.persen)}") },
+            shape = RoundedCornerShape(12.dp),
+            textStyle = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            KategoriFee.entries.forEach { item ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            "${item.label}  (${formatPersen(item.persen)})",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    onClick = {
+                        onKategoriChange(item)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PromoXtraRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    persen: String,
+    onPersenChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -479,50 +603,47 @@ private fun AsuransiRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
                 else
                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             )
-            .then(
-                if (checked)
-                    Modifier.border(
-                        width = 0.5.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                else Modifier
-            )
             .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Security,
-                contentDescription = null,
-                tint = if (checked)
+        Icon(
+            imageVector = Icons.Outlined.Percent,
+            contentDescription = null,
+            tint = if (checked)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "Biaya Promo XTRA",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(1.dp))
+            Text(
+                if (checked) "Aktif — persen dari harga before" else "Nonaktif",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (checked)
                     MaterialTheme.colorScheme.primary
                 else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text(
-                    "Asuransi Pengiriman",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(1.dp))
-                Text(
-                    if (checked) "Premi +0.5% aktif" else "Nonaktif",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (checked)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        }
+        if (checked) {
+            OutlinedTextField(
+                value = persen,
+                onValueChange = onPersenChange,
+                suffix = { Text("%") },
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(96.dp)
+            )
+            Spacer(Modifier.width(8.dp))
         }
         Switch(
             checked = checked,
@@ -680,16 +801,40 @@ private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
 
             DetailRow(
                 icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                label = "Biaya Layanan (${hasil.persenFeeAktif}%)",
-                amount = hasil.serviceFee,
+                label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
+                amount = hasil.commissionFee,
                 color = MaterialTheme.colorScheme.error
             )
             DetailRow(
                 icon = Icons.AutoMirrored.Outlined.TrendingDown,
-                label = "Biaya Proses Pesanan (Flat)",
+                label = "Biaya Proses Pesanan",
                 amount = hasil.prosesFee,
                 color = MaterialTheme.colorScheme.error
             )
+            if (hasil.promoXtraFee > 0) {
+                DetailRow(
+                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                    label = "Biaya Promo XTRA",
+                    amount = hasil.promoXtraFee,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (hasil.shippingSaverFee > 0) {
+                DetailRow(
+                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                    label = "Shipping Fee Saver",
+                    amount = hasil.shippingSaverFee,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (hasil.premiumFee > 0) {
+                DetailRow(
+                    icon = Icons.AutoMirrored.Outlined.TrendingDown,
+                    label = "Premium",
+                    amount = hasil.premiumFee,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
 
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant,
@@ -817,12 +962,18 @@ private fun DetailRow(
             )
         }
         Text(
-            "- ${formatRupiah(amount)}",
+            formatRupiahDenganTanda(amount),
             style = MaterialTheme.typography.bodyMedium,
             color = color.copy(alpha = 0.85f),
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
     }
+}
+
+/** Format dengan tanda minus konsisten: -Rp1.250 (tidak dobel minus). */
+private fun formatRupiahDenganTanda(amount: Long): String {
+    val nominal = formatRupiah(amount) // sudah menangani tanda negatif
+    return if (amount > 0) "- $nominal" else nominal
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -847,7 +998,8 @@ private fun InfoFooter() {
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            "Potongan: Admin 12,75% (tanpa asuransi) / 13,25% (dengan asuransi) + Rp1.250 biaya proses pesanan.",
+            "Fee admin dihitung dari harga sebelum diskon (voucher ditanggung Shopee) " +
+                "sesuai kategori produk, ditambah biaya proses pesanan Rp1.250.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             lineHeight = 16.sp
