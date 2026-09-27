@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.marketcalculator.data.RiwayatEntri
 import com.example.marketcalculator.data.RiwayatRepository
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,8 +26,7 @@ class RiwayatRepositoryTest {
         diskonPersen = 0,
         promoXtraPersen = 0.0,
         promoXtraAktif = false,
-        shippingSaver = 0,
-        premium = 0,
+        pakaiShippingSaver = false,
         persenFee = 8.25,
         commissionFee = 8_250,
         prosesFee = 1_250,
@@ -39,7 +38,7 @@ class RiwayatRepositoryTest {
     )
 
     @Test
-    fun `tambah menyimpan entri terbaru di depan`() = runTest {
+    fun `tambah menyimpan entri terbaru di depan`() = runBlocking {
         val repo = RiwayatRepository(app)
         repo.hapusSemua() // pastikan bersih (DataStore mungkin persisten antar test)
         repo.tambah(entri(1, 90_500))
@@ -50,7 +49,7 @@ class RiwayatRepositoryTest {
     }
 
     @Test
-    fun `hapus satu entri`() = runTest {
+    fun `hapus satu entri`() = runBlocking {
         val repo = RiwayatRepository(app)
         repo.hapusSemua()
         repo.tambah(entri(10, 1))
@@ -62,7 +61,7 @@ class RiwayatRepositoryTest {
     }
 
     @Test
-    fun `batas 50 entri terbaru`() = runTest {
+    fun `batas 50 entri terbaru`() = runBlocking {
         val repo = RiwayatRepository(app)
         repo.hapusSemua()
         repeat(55) { i -> repo.tambah(entri(i.toLong(), i.toLong())) }
