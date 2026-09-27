@@ -924,7 +924,7 @@ private fun DetailRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = color.copy(alpha = 0.5f),
+                tint = color.copy(alpha = 0.7f),
                 modifier = Modifier.size(14.dp)
             )
             Spacer(Modifier.width(6.dp))
@@ -938,7 +938,7 @@ private fun DetailRow(
         Text(
             formatRupiahDenganTanda(amount),
             style = MaterialTheme.typography.bodyMedium.tabularNums(),
-            color = color.copy(alpha = 0.85f),
+            color = color,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -967,7 +967,7 @@ private fun InfoFooter() {
         Icon(
             imageVector = Icons.Outlined.Info,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(14.dp).padding(top = 1.dp)
         )
         Spacer(Modifier.width(8.dp))
@@ -975,7 +975,7 @@ private fun InfoFooter() {
             "Fee admin dihitung dari harga sebelum diskon (voucher ditanggung Shopee) " +
                 "sesuai kategori produk, ditambah biaya proses pesanan Rp1.250.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             lineHeight = 16.sp
         )
     }
