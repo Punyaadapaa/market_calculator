@@ -56,6 +56,7 @@ import com.example.marketcalculator.data.KategoriFee
 import com.example.marketcalculator.data.formatPersen
 import com.example.marketcalculator.ui.theme.tabularNums
 import com.example.marketcalculator.ui.util.ThousandsSeparatorTransformation
+import com.example.marketcalculator.ui.util.formatRupiah
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -983,18 +984,12 @@ private fun DetailRow(
             )
         }
         Text(
-            formatRupiahDenganTanda(amount),
+            formatRupiah(amount, tanda = true),
             style = MaterialTheme.typography.bodyMedium.tabularNums(),
             color = color,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
     }
-}
-
-/** Format dengan tanda minus konsisten: -Rp1.250 (tidak dobel minus). */
-private fun formatRupiahDenganTanda(amount: Long): String {
-    val nominal = formatRupiah(amount) // sudah menangani tanda negatif
-    return if (amount > 0) "- $nominal" else nominal
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1037,19 +1032,4 @@ private fun VersionFooter() {
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth()
     )
-}
-
-// ═══════════════════════════════════════════════════════════
-// FORMAT RUPIAH
-// ═══════════════════════════════════════════════════════════
-
-private fun formatRupiah(amount: Long): String {
-    val text = amount.toString().removePrefix("-")
-    val sb = StringBuilder()
-    for ((index, char) in text.reversed().withIndex()) {
-        if (index != 0 && index % 3 == 0) sb.append('.')
-        sb.append(char)
-    }
-    val prefix = if (amount < 0) "-Rp" else "Rp"
-    return "$prefix${sb.reverse()}"
 }
