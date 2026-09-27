@@ -1,7 +1,6 @@
 package com.example.marketcalculator.ui.screens
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -38,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.selected as semanticsSelected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -261,23 +262,21 @@ private fun PillTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bgAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = tween(200),
-        label = "pill_bg"
-    )
-
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(11.dp),
         color = if (selected)
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+            MaterialTheme.colorScheme.primary
         else
             Color.Transparent,
         modifier = modifier
+            .heightIn(min = 48.dp)
+            .semantics { semanticsSelected = selected }
     ) {
         Row(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -285,7 +284,7 @@ private fun PillTab(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (selected)
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
@@ -295,7 +294,7 @@ private fun PillTab(
                 label,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (selected)
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
