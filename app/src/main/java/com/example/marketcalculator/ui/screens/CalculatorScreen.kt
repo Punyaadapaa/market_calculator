@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.TrendingDown
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Calculate
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Payments
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marketcalculator.BuildConfig
 import com.example.marketcalculator.data.CalcMode
@@ -150,7 +152,20 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                 )
 
                 // ── Ringkasan Hasil ──
-                RingkasanCard(hasil = uiState.hasil, onReset = viewModel::onReset)
+                RingkasanCard(
+                    hasil = uiState.hasil,
+                    onReset = viewModel::onReset,
+                    onSimpan = viewModel::simpanKeRiwayat
+                )
+
+                // ── Riwayat Perhitungan ──
+                val daftarRiwayat by viewModel.riwayat.collectAsStateWithLifecycle()
+                RiwayatSection(
+                    daftar = daftarRiwayat,
+                    onMuat = viewModel::muatDariRiwayat,
+                    onHapus = viewModel::hapusRiwayat,
+                    onHapusSemua = viewModel::hapusSemuaRiwayat
+                )
 
                 // ── Info Footer ──
                 InfoFooter()
@@ -685,7 +700,11 @@ private fun PromoXtraRow(
 // ═══════════════════════════════════════════════════════════
 
 @Composable
-private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
+private fun RingkasanCard(
+    hasil: HasilKalkulasi,
+    onReset: () -> Unit,
+    onSimpan: () -> Unit
+) {
     val kosong = hasil.totalPotongan == 0L && hasil.penghasilanBersih == 0L &&
         hasil.hargaWajibPasang == null && hasil.hargaSetelahDiskon == null
 
@@ -771,6 +790,23 @@ private fun RingkasanCard(hasil: HasilKalkulasi, onReset: () -> Unit) {
             }
 
             Spacer(Modifier.height(2.dp))
+
+            // Simpan ke riwayat (hanya kalau sudah ada hasil)
+            if (!kosong) {
+                Button(
+                    onClick = onSimpan,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.History,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Simpan ke Riwayat", style = MaterialTheme.typography.labelLarge)
+                }
+            }
 
             // Reset — selalu terlihat, tidak perlu scroll jauh
             OutlinedButton(
