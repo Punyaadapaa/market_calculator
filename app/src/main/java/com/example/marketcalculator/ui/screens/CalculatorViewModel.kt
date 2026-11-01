@@ -11,7 +11,7 @@ import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.CalculatorEngine
 import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
-import com.example.marketcalculator.data.PROMO_XTRA_DEFAULT_PERCENT
+// REMOVED: PROMO_XTRA_DEFAULT_PERCENT — sudah hardcoded di engine
 import com.example.marketcalculator.data.RiwayatEntri
 import com.example.marketcalculator.data.RiwayatRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,7 +34,7 @@ data class CalculatorUiState(
 
     // Kategori & biaya tambahan (dipakai kedua mode)
     val kategoriFee: KategoriFee = KategoriFee.default,
-    val promoXtraPersen: String = PROMO_XTRA_DEFAULT_PERCENT.toString(),
+    // NOTE: promoXtraPersen sudah fixed 4.5%, tidak perlu lagi di UI state
     val pakaiShippingSaver: Boolean = false,
 
     val hasil: HasilKalkulasi = HasilKalkulasi(),
@@ -80,7 +80,7 @@ class CalculatorViewModel(
             kategoriFee = savedState.get<String>(KEY_KATEGORI)
                 ?.let { runCatching { KategoriFee.valueOf(it) }.getOrNull() }
                 ?: default.kategoriFee,
-            promoXtraPersen = savedState[KEY_PROMO_PERSEN] ?: default.promoXtraPersen,
+            // REMOVED: promoXtraPersen sudah fixed 4.5% di engine
             pakaiShippingSaver = savedState[KEY_SAVER] ?: default.pakaiShippingSaver
         )
         return hitung(state)
@@ -96,7 +96,7 @@ class CalculatorViewModel(
         savedState[KEY_DISKON] = state.diskonPersen
         savedState[KEY_PROMO_TARGET] = state.pakaiPromoXtraTarget
         savedState[KEY_KATEGORI] = state.kategoriFee.name
-        savedState[KEY_PROMO_PERSEN] = state.promoXtraPersen
+        // REMOVED: KEY_PROMO_PERSEN — tidak perlu lagi, fixed 4.5%
         savedState[KEY_SAVER] = state.pakaiShippingSaver
         return hitung(state)
     }
@@ -110,7 +110,7 @@ class CalculatorViewModel(
         const val KEY_DISKON = "diskon"
         const val KEY_PROMO_TARGET = "promo_target"
         const val KEY_KATEGORI = "kategori"
-        const val KEY_PROMO_PERSEN = "promo_persen"
+        // REMOVED: KEY_PROMO_PERSEN — sudah fixed 4.5%
         const val KEY_SAVER = "saver"
     }
 
@@ -149,12 +149,8 @@ class CalculatorViewModel(
         uiState = terapkan(berikut)
     }
 
-    fun onPromoXtraPersenChange(value: String) {
-        // Boleh desimal (mis. "4.5"); filter digit + satu titik.
-        val bersih = value.filter { it.isDigit() || it == '.' }.take(4)
-        uiState = terapkan(uiState.copy(promoXtraPersen = bersih))
-    }
-
+    // REMOVED: onPromoXtraPersenChange() — sudah fixed 4.5%, tidak perlu input lagi
+    
     fun onShippingSaverToggle(checked: Boolean) {
         uiState = terapkan(uiState.copy(pakaiShippingSaver = checked))
     }
@@ -184,6 +180,7 @@ class CalculatorViewModel(
                 kotlin.math.abs(it.persen - entri.persenFee) < 0.001
             }
             ?: uiState.kategoriFee
+        // NOTE: promoXtraPersen sudah fixed 4.5%, ignore stored value
         val dasar = CalculatorUiState(
             mode = mode,
             hargaAwal = if (mode == CalcMode.HARGA_JUAL) entri.hargaAwal.toString() else uiState.hargaAwal,
@@ -193,7 +190,7 @@ class CalculatorViewModel(
             diskonPersen = if (mode == CalcMode.TARGET_HARGA) entri.diskonPersen.toString() else uiState.diskonPersen,
             pakaiPromoXtraTarget = if (mode == CalcMode.TARGET_HARGA) entri.promoXtraAktif else uiState.pakaiPromoXtraTarget,
             kategoriFee = kategori,
-            promoXtraPersen = trimAngkaDesimal(entri.promoXtraPersen),
+            // Hardcode 4.5% — tidak ambil dari entri lagi
             pakaiShippingSaver = entri.pakaiShippingSaver
         )
         uiState = terapkan(dasar)
@@ -230,7 +227,8 @@ class CalculatorViewModel(
                 CalcMode.HARGA_JUAL -> state.diskonPersenHargaJual.toIntOrNull() ?: 0
                 CalcMode.TARGET_HARGA -> state.diskonPersen.toIntOrNull() ?: 0
             },
-            promoXtraPersen = state.promoXtraPersen.toDoubleOrNull() ?: 0.0,
+            // Hardcode 4.5% — tidak ambil dari state lagi
+            promoXtraPersen = 4.5,
             promoXtraAktif = promoXtraAktif(state),
             pakaiShippingSaver = state.pakaiShippingSaver,
             persenFee = h.persenFeeAktif,
@@ -255,7 +253,7 @@ class CalculatorViewModel(
         state.targetHarga,
         state.diskonPersen,
         state.kategoriFee.name,
-        state.promoXtraPersen,
+        // REMOVED: state.promoXtraPersen — sudah fixed 4.5%
         pakaiPromoXtraFlags(state),
         state.pakaiShippingSaver.toString()
     ).joinToString("|")
@@ -265,12 +263,9 @@ class CalculatorViewModel(
         CalcMode.TARGET_HARGA -> state.pakaiPromoXtraTarget.toString()
     }
 
-    /** 4.5 -> "4.5", 4.0 -> "4" (biar field-nya rapi). */
-    private fun trimAngkaDesimal(nilai: Double): String =
-        if (nilai % 1.0 == 0.0) nilai.toInt().toString() else nilai.toString()
-
     // ── Perhitungan ──────────────────────────────────────────
 
+    /** Promo XTRA aktif kalau toggle di mode terkait ON. Persennya fixed 4,5%. */
     private fun promoXtraAktif(state: CalculatorUiState): Boolean = when (state.mode) {
         CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual
         CalcMode.TARGET_HARGA -> state.pakaiPromoXtraTarget
@@ -279,11 +274,8 @@ class CalculatorViewModel(
     /** Hitung [state] dan kembalikan salinannya yang sudah berisi hasil. */
     private fun hitung(state: CalculatorUiState): CalculatorUiState {
         val kategori = state.kategoriFee
-        val promoPersen = if (promoXtraAktif(state)) {
-            state.promoXtraPersen.toDoubleOrNull() ?: 0.0
-        } else {
-            0.0
-        }
+        // Hardcode 4.5% jika toggle ON, otherwise 0
+        val promoPersen = if (promoXtraAktif(state)) 4.5 else 0.0
 
         return when (state.mode) {
             CalcMode.HARGA_JUAL -> {

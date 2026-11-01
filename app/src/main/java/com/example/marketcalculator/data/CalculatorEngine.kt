@@ -5,13 +5,20 @@ import kotlin.math.roundToLong
 /** Biaya proses pesanan (Seller Order Processing Fee) — flat per pesanan selesai. */
 const val FLAT_FEE = 1250L
 
-/** Persen default Promo XTRA (opsional, bisa diubah user). */
+/** Persen default Promo XTRA (fixed, tidak bisa diubah user). */
 const val PROMO_XTRA_DEFAULT_PERCENT = 4.5
 
+/** Maksimal fee Promo XTRA per transaksi. */
+const val PROMO_XTRA_MAX_FEE = 60_000L
+
 /**
- * Biaya Premium — SELALU dipotong Shopee, nilainya 0,50% dari harga produk.
- * Terverifikasi dari 3 transaksi Income Details nyata (1.000.000→5.000,
- * 1.100.000→5.500, 734.000→3.670).
+ * PPh 22 / WHT 22 — SELALU dipotong Shopee, nilainya 0,50% dari harga produk.
+ * Di Income Details Shopee tampil sebagai baris "Tax — WHT 22".
+ * Terverifikasi dari 4 transaksi nyata (1.000.000→5.000, 1.100.000→5.500,
+ * 734.000→3.670, 937.500→4.688).
+ *
+ * Catatan: nama field/konstanta tetap `premiumFee`/`PREMIUM_PERCENT` demi
+ * kompatibilitas JSON riwayat yang sudah tersimpan. Label UI memakai "PPh 22".
  */
 const val PREMIUM_PERCENT = 0.5
 
@@ -29,12 +36,12 @@ data class HasilKalkulasi(
     val prosesFee: Long = 0,                  // biaya proses pesanan (flat)
     val promoXtraFee: Long = 0,               // biaya layanan Promo XTRA
     val shippingSaverFee: Long = 0,           // Shipping Fee Saver (toggle)
-    val premiumFee: Long = 0,                 // biaya Premium (selalu, 0,5%)
+    val premiumFee: Long = 0,                 // PPh 22 / WHT 22 (selalu, 0,5%)
 
     /** commissionFee + prosesFee */
     val platformFee: Long = 0,
 
-    /** platformFee + promoXtra + shippingSaver + premium */
+    /** platformFee + promoXtra + shippingSaver + pph22 */
     val totalPotongan: Long = 0,
 
     val penghasilanBersih: Long = 0
@@ -66,10 +73,15 @@ object CalculatorEngine {
         val commissionFee = (hargaAwal * kategoriFee.persen / 100.0).roundToLong()
         val platformFee = commissionFee + FLAT_FEE
 
-        // Promo XTRA — persen dari harga before.
-        val promoXtraFee = (hargaAwal * promoXtraPersen / 100.0).roundToLong()
+        // Promo XTRA — persen dari harga before, dengan cap maksimal Rp60.000.
+        val promoXtraFeeRaw = if (promoXtraPersen > 0) {
+            (hargaAwal * promoXtraPersen / 100.0).roundToLong()
+        } else {
+            0L
+        }
+        val promoXtraFee = minOf(promoXtraFeeRaw, PROMO_XTRA_MAX_FEE)
 
-        // Premium — selalu, 0,5% dari harga before.
+        // PPh 22 / WHT 22 — selalu, 0,5% dari harga before.
         val premiumFee = (hargaAwal * PREMIUM_PERCENT / 100.0).roundToLong()
 
         // Shipping Fee Saver — flat, hanya kalau diaktifkan.
@@ -127,7 +139,12 @@ object CalculatorEngine {
         val commissionFee = (hargaWajibPasang * kategoriFee.persen / 100.0).roundToLong()
         val platformFee = commissionFee + FLAT_FEE
 
-        val promoXtraFee = (hargaWajibPasang * promoXtraPersen / 100.0).roundToLong()
+        val promoXtraFeeRaw = if (promoXtraPersen > 0) {
+            (hargaWajibPasang * promoXtraPersen / 100.0).roundToLong()
+        } else {
+            0L
+        }
+        val promoXtraFee = minOf(promoXtraFeeRaw, PROMO_XTRA_MAX_FEE)
         val premiumFee = (hargaWajibPasang * PREMIUM_PERCENT / 100.0).roundToLong()
         val shippingSaver = if (pakaiShippingSaver) SHIPPING_SAVER_FEE else 0L
 

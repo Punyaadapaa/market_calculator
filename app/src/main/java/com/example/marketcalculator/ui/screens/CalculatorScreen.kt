@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -150,8 +151,6 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     else
                         uiState.pakaiPromoXtraTarget,
                     onPromoXtraToggle = viewModel::onPromoXtraToggle,
-                    promoXtraPersen = uiState.promoXtraPersen,
-                    onPromoXtraPersenChange = viewModel::onPromoXtraPersenChange,
                     pakaiShippingSaver = uiState.pakaiShippingSaver,
                     onShippingSaverToggle = viewModel::onShippingSaverToggle,
                     onFokusBerubah = onFokusBerubah
@@ -517,8 +516,6 @@ private fun BiayaTambahanCard(
     onKategoriChange: (KategoriFee) -> Unit,
     promoXtraAktif: Boolean,
     onPromoXtraToggle: (Boolean) -> Unit,
-    promoXtraPersen: String,
-    onPromoXtraPersenChange: (String) -> Unit,
     pakaiShippingSaver: Boolean,
     onShippingSaverToggle: (Boolean) -> Unit,
     onFokusBerubah: (Boolean) -> Unit
@@ -531,10 +528,7 @@ private fun BiayaTambahanCard(
 
         PromoXtraRow(
             checked = promoXtraAktif,
-            onCheckedChange = onPromoXtraToggle,
-            persen = promoXtraPersen,
-            onPersenChange = onPromoXtraPersenChange,
-            onFokusBerubah = onFokusBerubah
+            onCheckedChange = onPromoXtraToggle
         )
 
         ToggleRow(
@@ -564,7 +558,7 @@ private fun ToggleRow(
                 if (checked) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerHigh
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -572,27 +566,32 @@ private fun ToggleRow(
             contentDescription = null,
             tint = if (checked) MaterialTheme.colorScheme.primary
             else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(18.dp)
         )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            judul,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
-        if (keterangan != null) {
+        Spacer(Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                keterangan,
+                judul,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.width(10.dp))
+            if (keterangan != null) {
+                Text(
+                    keterangan,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            modifier = Modifier.scale(0.85f),
             colors = SwitchDefaults.colors(
                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary
@@ -671,13 +670,9 @@ private fun KategoriDropdown(
 @Composable
 private fun PromoXtraRow(
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    persen: String,
-    onPersenChange: (String) -> Unit,
-    onFokusBerubah: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
@@ -687,61 +682,45 @@ private fun PromoXtraRow(
                 else
                     MaterialTheme.colorScheme.surfaceContainerHigh
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Percent,
-                contentDescription = null,
-                tint = if (checked)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(10.dp))
+        Icon(
+            imageVector = Icons.Outlined.Percent,
+            contentDescription = null,
+            tint = if (checked)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 "Promo XTRA",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        }
-        // Field persen di baris sendiri (aman saat font scale besar).
-        if (checked) {
-            Spacer(Modifier.height(10.dp))
-            OutlinedTextField(
-                value = persen,
-                onValueChange = onPersenChange,
-                label = { Text("Persen Promo XTRA") },
-                suffix = { Text("%") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
-                ),
-                shape = RoundedCornerShape(10.dp),
-                textStyle = MaterialTheme.typography.bodyMedium.tabularNums(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { onFokusBerubah(it.isFocused) }
+            Text(
+                "4,5% (maks. Rp60.000)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.scale(0.85f),
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+            )
+        )
     }
 }
 
@@ -796,7 +775,7 @@ private fun RingkasanCard(
                     DetailRow(label = "Shipping Fee Saver", amount = hasil.shippingSaverFee)
                 }
                 if (hasil.premiumFee > 0) {
-                    DetailRow(label = "Premium", amount = hasil.premiumFee)
+                    DetailRow(label = "PPh 22 / WHT 22 (0,5%)", amount = hasil.premiumFee)
                 }
 
                 HorizontalDivider(

@@ -244,7 +244,7 @@ private fun RiwayatDetailDialog(
                     DetailBaris("Shipping Fee Saver", formatRupiah(entri.shippingSaverFee))
                 }
                 if (entri.premiumFee > 0) {
-                    DetailBaris("Premium (0,5%)", formatRupiah(entri.premiumFee))
+                    DetailBaris("PPh 22 / WHT 22 (0,5%)", formatRupiah(entri.premiumFee))
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 DetailBaris("Total potongan", formatRupiah(entri.totalPotongan))
