@@ -44,6 +44,11 @@ enum class KategoriFee(
         "Earphone/Headset, Aksesoris Laptop, Susu Formula, Baking",
         6.75
     ),
+    SUKU_CADANG(
+        "Suku Cadang & Aksesoris Motor",
+        "Knalpot, Spion, Busi, Filter, Variasi Motor, Sparepart",
+        8.25
+    ),
     FASHION_BAWAH(
         "Fashion & Ibu Bayi",
         "Atasan, Mukena, E-Money, Alat Kecantikan, Perlengkapan Bayi",

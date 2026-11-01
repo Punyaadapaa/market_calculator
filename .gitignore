@@ -22,3 +22,7 @@ local.properties
 .agents/
 .cursor/
 .opencode/
+
+# Dokumen internal (tetap lokal, tidak dipublikasikan)
+PRODUCT.md
+DESIGN.md
