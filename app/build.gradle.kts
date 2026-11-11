@@ -16,6 +16,7 @@ android {
         applicationId = "com.example.marketcalculator"
         minSdk = 24
         targetSdk = 36
+        // Bump versionCode by one and the minor version on every update.
         versionCode = 2
         versionName = "1.1"
 
