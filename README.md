@@ -37,7 +37,7 @@ cd market_calculator
 ./gradlew assembleDebug
 ```
 
-Butuh JDK 17+ dan Android SDK 36.
+Butuh JDK 21 dan Android SDK 36.
 
 ## Versi
 
