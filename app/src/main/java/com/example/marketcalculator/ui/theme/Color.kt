@@ -2,98 +2,80 @@ package com.example.marketcalculator.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ═══════════════════════════════════════════════
-// Palet warna dark theme — GitHub-style dark
-// Lebih netral, mata nyaman, modern minimalis
-// ═══════════════════════════════════════════════
+// Dark theme palette: GitHub-style dark, eye-friendly, modern minimal.
 
-// Background & Surface — Gradasi gelap netral (bukan navy kebiruan)
-val DarkBackground   = Color(0xFF0D1117)   // Background utama, hampir hitam
-val DarkSurface      = Color(0xFF161B22)   // Card & container
-val DarkSurfaceLow   = Color(0xFF0D1117)   // Bagian paling dalam
-val DarkSurfaceHigh  = Color(0xFF21262D)   // Elevated card
-val DarkSurfaceBright = Color(0xFF30363D)  // Hover / pressed state
+// Background and surface
+val DarkBackground   = Color(0xFF0D1117)   // Main background
+val DarkSurface      = Color(0xFF161B22)   // Card and container
+val DarkSurfaceLow   = Color(0xFF0D1117)   // Inner surface
+val DarkSurfaceHigh  = Color(0xFF1C2129)   // Input and cost rows
+val DarkSurfaceBright = Color(0xFF21262D)  // Tab track and chip
 val DarkSurfaceLowest = Color(0xFF010409)  // Backdrop
 
-// Border & Divider
-val DarkOutline        = Color(0xFF484F58)  // Border utama
-val DarkOutlineVariant = Color(0xFF30363D)  // Divider halus
+// Border and divider
+val DarkOutline        = Color(0xFF484F58)  // Main border
+val DarkOutlineVariant = Color(0xFF262C36)  // Subtle divider
 
-// Teks
-val DarkOnSurface        = Color(0xFFE6EDF3)  // Teks utama, putih lembut
-val DarkOnSurfaceVariant = Color(0xFF8B949E)  // Teks sekunder, abu-abu
+// Text
+val DarkOnSurface        = Color(0xFFE6EDF3)  // Primary text
+val DarkOnSurfaceVariant = Color(0xFF8B949E)  // Secondary text
 
-// ═══════════════════════════════════════════════
-// Primary — Shopee Orange (brand)
-// #EE4D2D adalah warna resmi Shopee. Di dark mode dipakai versi terang
-// (#FF6B4A) supaya kontras WCAG AA tetap aman di atas latar gelap.
-// ═══════════════════════════════════════════════
-val ShopeeOrange          = Color(0xFFEE4D2D)  // Brand utama (referensi)
-val PrimaryOrange         = Color(0xFFFF6B4A)  // Primary di dark mode (lebih terang)
-val OnPrimaryDark         = Color(0xFFFFFFFF)  // Teks di atas primary
-val PrimaryContainerDark  = Color(0xFF5C1F0F)  // Container primary (dark)
-val OnPrimaryContainerDark = Color(0xFFFFDAD3) // Teks di atas container primary
+// Primary: Shopee orange
+val PrimaryOrange          = Color(0xFFFF8C42)  // Primary in dark mode
+val OnPrimaryDark          = Color(0xFF231304)  // Text on primary
+val PrimaryContainerDark   = Color(0xFF4A2A12)  // Primary container
+val OnPrimaryContainerDark = Color(0xFFFFD4B8)  // Text on primary container
 
-// ═══════════════════════════════════════════════
-// Secondary — Emerald hijau, buat angka "penghasilan bersih"
-// Warna hijau lebih intuitif buat profit daripada teal
-// ═══════════════════════════════════════════════
-val ProfitGreen    = Color(0xFF3FB950)  // Hijau profit (GitHub green)
-val OnProfitGreen  = Color(0xFF0A2E10)  // Teks gelap di atas hijau
-val ProfitGreenContainer = Color(0xFF12351B)     // Background panel penghasilan bersih
-val OnProfitGreenContainer = Color(0xFF7EE787)   // Teks/angka di atas container hijau
+// Secondary: teal for net profit
+val ProfitTeal               = Color(0xFF26AA99)  // Profit teal
+val OnProfitTeal             = Color(0xFF04211D)  // Text on teal
+val ProfitTealContainer      = Color(0xFF102E2A)  // Net profit panel
+val OnProfitTealContainer    = Color(0xFFDFF6F2)  // Text on teal container
 
-// ═══════════════════════════════════════════════
-// Error — Merah lembut, buat potongan & peringatan
-// ═══════════════════════════════════════════════
-val ErrorRed       = Color(0xFFF85149)  // Merah error (GitHub red)
-val ErrorContainer = Color(0xFF3D1418)  // Container error
-val OnErrorContainerDark = Color(0xFFFF9C94)  // Teks/angka di atas container error
-val OnErrorDark    = Color(0xFF2A0608)  // Teks gelap di atas merah
+// Error: red for deductions and warnings
+val ErrorRed       = Color(0xFFF85149)  // Error red
+val ErrorContainer = Color(0xFF3D1418)  // Error container
+val OnErrorContainerDark = Color(0xFFFF9C94)  // Text on error container
+val OnErrorDark    = Color(0xFF2A0608)  // Text on red
 
-// ═══════════════════════════════════════════════
-// Tertiary — Biru muda, buat aksen info
-// ═══════════════════════════════════════════════
-val AccentBlue = Color(0xFF58A6FF)  // Link / highlight info
+// Tertiary: blue accent for info
+val AccentBlue = Color(0xFF58A6FF)  // Link and highlight
 
-// ═══════════════════════════════════════════════
-// Palet warna LIGHT theme
-// Netral terang dengan aksen hangat yang sama, kontras WCAG AA
-// ═══════════════════════════════════════════════
+// Light theme palette: neutral bright with warm accents, WCAG AA contrast.
 
-// Background & Surface
-val LightBackground        = Color(0xFFF5F5F5)  // Latar utama (Background Gray, sesuai spec)
-val LightSurface           = Color(0xFFFFFFFF)  // Card & container
-val LightSurfaceLow        = Color(0xFFEFEFEF)  // Bagian dalam
-val LightSurfaceHigh       = Color(0xFFE8E8E8)  // Elevated card
-val LightSurfaceBright     = Color(0xFFE0E0E0)  // Hover / pressed
+// Background and surface
+val LightBackground        = Color(0xFFF3F3F3)  // Main background
+val LightSurface           = Color(0xFFFFFFFF)  // Card and container
+val LightSurfaceLow        = Color(0xFFF3F3F3)  // Inner surface
+val LightSurfaceHigh       = Color(0xFFF7F7F7)  // Input and cost rows
+val LightSurfaceBright     = Color(0xFFEDEDED)  // Tab track and chip
 val LightSurfaceLowest     = Color(0xFFFFFFFF)  // Backdrop
 
-// Border & Divider
-val LightOutline           = Color(0xFFB0B0B0)  // Border utama
-val LightOutlineVariant    = Color(0xFFDCDCDC)  // Divider halus
+// Border and divider
+val LightOutline           = Color(0xFFB0B0B0)  // Main border
+val LightOutlineVariant    = Color(0xFFE6E6E6)  // Subtle divider
 
-// Teks (sesuai spec: Text Primary #222222, Text Secondary #757575)
-val LightOnSurface         = Color(0xFF222222)  // Teks utama, hampir hitam
-val LightOnSurfaceVariant  = Color(0xFF6B6B6B)  // Teks sekunder, abu
+// Text
+val LightOnSurface         = Color(0xFF222222)  // Primary text
+val LightOnSurfaceVariant  = Color(0xFF6B6B6B)  // Secondary text
 
-// Primary — Shopee Orange (brand asli). Di light mode dipakai #EE4D2D.
-val PrimaryOrangeLightTheme      = Color(0xFFEE4D2D)  // Primary (brand) — tombol/aksen
-val PrimaryOrangeLightThemeCont  = Color(0xFFFFDAD3)  // Container primary
-val OnPrimaryLightTheme          = Color(0xFFFFFFFF)  // Teks di atas primary
-val OnPrimaryContainerLight      = Color(0xFF410000)  // Teks di atas container primary
+// Primary: Shopee orange
+val PrimaryOrangeLightTheme      = Color(0xFFEE4D2D)  // Primary
+val PrimaryOrangeLightThemeCont  = Color(0xFFFFDAD3)  // Primary container
+val OnPrimaryLightTheme          = Color(0xFFFFFFFF)  // Text on primary
+val OnPrimaryContainerLight      = Color(0xFF410000)  // Text on primary container
 
-// Secondary — hijau profit (lebih gelap)
-val ProfitGreenLight             = Color(0xFF0E6B2E)  // Hijau profit (teks/ikon)
-val OnProfitGreenLight           = Color(0xFFFFFFFF)  // Teks di atas hijau
-val ProfitGreenContainerLight    = Color(0xFFC8F0CF)  // Container penghasilan bersih
-val OnProfitContainerLight       = Color(0xFF04240C)  // Teks di atas container hijau
+// Secondary: teal for net profit
+val ProfitTealLight              = Color(0xFF17968A)  // Profit teal
+val OnProfitTealLight            = Color(0xFFFFFFFF)  // Text on teal
+val ProfitTealContainerLight     = Color(0xFFEAF7F5)  // Net profit panel
+val OnProfitContainerLight       = Color(0xFF073B35)  // Text on teal container
 
-// Error — merah (lebih gelap)
-val ErrorRedLight                = Color(0xFFB3211B)  // Merah error
-val OnErrorLight                 = Color(0xFFFFFFFF)  // Teks di atas merah
-val ErrorContainerLight          = Color(0xFFFFDAD6)  // Container error
-val OnErrorContainerLight        = Color(0xFF410002)  // Teks di atas container error
+// Error: red for deductions and warnings
+val ErrorRedLight                = Color(0xFFD0011B)  // Error red
+val OnErrorLight                 = Color(0xFFFFFFFF)  // Text on red
+val ErrorContainerLight          = Color(0xFFFFDAD6)  // Error container
+val OnErrorContainerLight        = Color(0xFF410002)  // Text on error container
 
-// Tertiary — biru info (lebih gelap)
-val AccentBlueLight              = Color(0xFF0A5BC4)  // Link / highlight info
+// Tertiary: blue accent for info
+val AccentBlueLight              = Color(0xFF0A5BC4)  // Link and highlight

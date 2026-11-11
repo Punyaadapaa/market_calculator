@@ -69,7 +69,7 @@ val KalkulatorTypography = Typography(
 )
 
 /**
- * Angka tabular (tabular-nums) supaya digit tidak bergoyang saat nilai berubah.
- * Dipakai untuk semua teks nominal Rupiah & persen.
+ * Tabular numerals so digits do not shift when values change.
+ * Used for all Rupiah and percent amounts.
  */
 fun TextStyle.tabularNums(): TextStyle = copy(fontFeatureSettings = "tnum")

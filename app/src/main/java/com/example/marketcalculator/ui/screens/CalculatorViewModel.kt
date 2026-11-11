@@ -11,7 +11,6 @@ import com.example.marketcalculator.data.CalcMode
 import com.example.marketcalculator.data.CalculatorEngine
 import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
-// REMOVED: PROMO_XTRA_DEFAULT_PERCENT — sudah hardcoded di engine
 import com.example.marketcalculator.data.RiwayatEntri
 import com.example.marketcalculator.data.RiwayatRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,19 +21,24 @@ import kotlinx.coroutines.launch
 data class CalculatorUiState(
     val mode: CalcMode = CalcMode.HARGA_JUAL,
 
-    // Input mode Harga Jual
+    // Harga Jual inputs
     val hargaAwal: String = "",
     val diskonPersenHargaJual: String = "0",
     val pakaiPromoXtraHargaJual: Boolean = false,
 
-    // Input mode Target Harga
+    // Target Harga inputs
     val targetHarga: String = "",
     val diskonPersen: String = "0",
     val pakaiPromoXtraTarget: Boolean = false,
 
-    // Kategori & biaya tambahan (dipakai kedua mode)
+    // Target Bersih inputs (net income the seller wants to receive)
+    val targetBersih: String = "",
+    val diskonPersenBersih: String = "0",
+    val pakaiPromoXtraBersih: Boolean = false,
+
+    // Category and extra fees, shared by all modes
     val kategoriFee: KategoriFee = KategoriFee.default,
-    // NOTE: promoXtraPersen sudah fixed 4.5%, tidak perlu lagi di UI state
+    // Promo XTRA rate is fixed at 4.5%, so it is not part of the UI state.
     val pakaiShippingSaver: Boolean = false,
 
     val hasil: HasilKalkulasi = HasilKalkulasi(),
@@ -48,7 +52,7 @@ class CalculatorViewModel(
 
     private val riwayatRepo = RiwayatRepository(application)
 
-    /** Daftar riwayat (terbaru di depan), otomatis update dari DataStore. */
+    /** History list, newest first, updated automatically from DataStore. */
     val riwayat: StateFlow<List<RiwayatEntri>> = riwayatRepo.riwayat.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -58,12 +62,12 @@ class CalculatorViewModel(
     var uiState by mutableStateOf(muatStateAwal())
         private set
 
-    /** Input perhitungan valid terakhir yang sudah disimpan (anti-duplikat). */
+    /** Last saved valid input, used to skip duplicates. */
     private var kunciTerakhir: String? = null
 
     /**
-     * Bangun state awal. Kalau proses app pernah dimatikan sistem dan
-     * dipulihkan, ambil lagi input terakhir dari SavedStateHandle.
+     * Builds the initial state, restoring the last input from SavedStateHandle
+     * when the system killed and restored the process.
      */
     private fun muatStateAwal(): CalculatorUiState {
         val default = CalculatorUiState()
@@ -77,16 +81,18 @@ class CalculatorViewModel(
             targetHarga = savedState[KEY_TARGET] ?: default.targetHarga,
             diskonPersen = savedState[KEY_DISKON] ?: default.diskonPersen,
             pakaiPromoXtraTarget = savedState[KEY_PROMO_TARGET] ?: default.pakaiPromoXtraTarget,
+            targetBersih = savedState[KEY_TARGET_BERSIH] ?: default.targetBersih,
+            diskonPersenBersih = savedState[KEY_DISKON_BERSIH] ?: default.diskonPersenBersih,
+            pakaiPromoXtraBersih = savedState[KEY_PROMO_BERSIH] ?: default.pakaiPromoXtraBersih,
             kategoriFee = savedState.get<String>(KEY_KATEGORI)
                 ?.let { runCatching { KategoriFee.valueOf(it) }.getOrNull() }
                 ?: default.kategoriFee,
-            // REMOVED: promoXtraPersen sudah fixed 4.5% di engine
             pakaiShippingSaver = savedState[KEY_SAVER] ?: default.pakaiShippingSaver
         )
         return hitung(state)
     }
 
-    /** Simpan field input penting supaya tahan proses death, lalu hitung. */
+    /** Saves the important input fields against process death, then recalculates. */
     private fun terapkan(state: CalculatorUiState): CalculatorUiState {
         savedState[KEY_MODE] = state.mode.name
         savedState[KEY_HARGA_AWAL] = state.hargaAwal
@@ -95,8 +101,10 @@ class CalculatorViewModel(
         savedState[KEY_TARGET] = state.targetHarga
         savedState[KEY_DISKON] = state.diskonPersen
         savedState[KEY_PROMO_TARGET] = state.pakaiPromoXtraTarget
+        savedState[KEY_TARGET_BERSIH] = state.targetBersih
+        savedState[KEY_DISKON_BERSIH] = state.diskonPersenBersih
+        savedState[KEY_PROMO_BERSIH] = state.pakaiPromoXtraBersih
         savedState[KEY_KATEGORI] = state.kategoriFee.name
-        // REMOVED: KEY_PROMO_PERSEN — tidak perlu lagi, fixed 4.5%
         savedState[KEY_SAVER] = state.pakaiShippingSaver
         return hitung(state)
     }
@@ -109,12 +117,14 @@ class CalculatorViewModel(
         const val KEY_TARGET = "target"
         const val KEY_DISKON = "diskon"
         const val KEY_PROMO_TARGET = "promo_target"
+        const val KEY_TARGET_BERSIH = "target_bersih"
+        const val KEY_DISKON_BERSIH = "diskon_bersih"
+        const val KEY_PROMO_BERSIH = "promo_bersih"
         const val KEY_KATEGORI = "kategori"
-        // REMOVED: KEY_PROMO_PERSEN — sudah fixed 4.5%
         const val KEY_SAVER = "saver"
     }
 
-    // ── Aksi input ───────────────────────────────────────────
+    // Input actions
 
     fun onModeChange(mode: CalcMode) {
         if (mode == uiState.mode) return
@@ -137,6 +147,14 @@ class CalculatorViewModel(
         uiState = terapkan(uiState.copy(diskonPersen = value.filter { it.isDigit() }.take(3)))
     }
 
+    fun onTargetBersihChange(value: String) {
+        uiState = terapkan(uiState.copy(targetBersih = value.filter { it.isDigit() }))
+    }
+
+    fun onDiskonBersihChange(value: String) {
+        uiState = terapkan(uiState.copy(diskonPersenBersih = value.filter { it.isDigit() }.take(3)))
+    }
+
     fun onKategoriChange(kategori: KategoriFee) {
         uiState = terapkan(uiState.copy(kategoriFee = kategori))
     }
@@ -145,12 +163,11 @@ class CalculatorViewModel(
         val berikut = when (uiState.mode) {
             CalcMode.HARGA_JUAL -> uiState.copy(pakaiPromoXtraHargaJual = checked)
             CalcMode.TARGET_HARGA -> uiState.copy(pakaiPromoXtraTarget = checked)
+            CalcMode.TARGET_BERSIH -> uiState.copy(pakaiPromoXtraBersih = checked)
         }
         uiState = terapkan(berikut)
     }
 
-    // REMOVED: onPromoXtraPersenChange() — sudah fixed 4.5%, tidak perlu input lagi
-    
     fun onShippingSaverToggle(checked: Boolean) {
         uiState = terapkan(uiState.copy(pakaiShippingSaver = checked))
     }
@@ -160,7 +177,7 @@ class CalculatorViewModel(
         uiState = terapkan(CalculatorUiState())
     }
 
-    // ── Riwayat ──────────────────────────────────────────────
+    // History
 
     fun hapusRiwayat(id: Long) {
         viewModelScope.launch { riwayatRepo.hapus(id) }
@@ -170,17 +187,16 @@ class CalculatorViewModel(
         viewModelScope.launch { riwayatRepo.hapusSemua() }
     }
 
-    /** Muat entri riwayat kembali ke kalkulator untuk dihitung ulang/diubah. */
+    /** Load a history entry back into the calculator for editing or recalculation. */
     fun muatDariRiwayat(entri: RiwayatEntri) {
         val mode = runCatching { CalcMode.valueOf(entri.mode) }.getOrDefault(CalcMode.HARGA_JUAL)
-        // Cocokkan label dulu; kalau gagal (mis. label lama sudah berubah),
-        // fallback ke persen fee yang tersimpan di entri.
+        // Match by label first; fallback to the saved fee percentage.
+        // If both fail, keep the current category.
         val kategori = KategoriFee.entries.firstOrNull { it.label == entri.kategoriNama }
             ?: KategoriFee.entries.firstOrNull {
                 kotlin.math.abs(it.persen - entri.persenFee) < 0.001
             }
             ?: uiState.kategoriFee
-        // NOTE: promoXtraPersen sudah fixed 4.5%, ignore stored value
         val dasar = CalculatorUiState(
             mode = mode,
             hargaAwal = if (mode == CalcMode.HARGA_JUAL) entri.hargaAwal.toString() else uiState.hargaAwal,
@@ -189,21 +205,23 @@ class CalculatorViewModel(
             targetHarga = if (mode == CalcMode.TARGET_HARGA) entri.hargaAwal.toString() else uiState.targetHarga,
             diskonPersen = if (mode == CalcMode.TARGET_HARGA) entri.diskonPersen.toString() else uiState.diskonPersen,
             pakaiPromoXtraTarget = if (mode == CalcMode.TARGET_HARGA) entri.promoXtraAktif else uiState.pakaiPromoXtraTarget,
+            targetBersih = if (mode == CalcMode.TARGET_BERSIH) (entri.targetBersih ?: 0L).toString() else uiState.targetBersih,
+            diskonPersenBersih = if (mode == CalcMode.TARGET_BERSIH) entri.diskonPersen.toString() else uiState.diskonPersenBersih,
+            pakaiPromoXtraBersih = if (mode == CalcMode.TARGET_BERSIH) entri.promoXtraAktif else uiState.pakaiPromoXtraBersih,
             kategoriFee = kategori,
-            // Hardcode 4.5% — tidak ambil dari entri lagi
             pakaiShippingSaver = entri.pakaiShippingSaver
         )
         uiState = terapkan(dasar)
     }
 
     /**
-     * Simpan perhitungan saat ini ke riwayat. Dipanggil saat user dianggap
-     * SELESAI mengisi (menutup keyboard / menekan "Selesai"), bukan tiap
-     * ketikan. Jadi 1 perhitungan = 1 entri.
+     * Saves the current calculation to history. Called when the user is done
+     * typing (keyboard closed or Done pressed), not on every keystroke, so one
+     * calculation makes one entry.
      *
-     * Dilewati kalau:
-     * - belum ada hitungan valid (harga 0 / ada error), atau
-     * - inputnya sama persis dengan yang terakhir disimpan (anti-duplikat).
+     * Skipped when:
+     * - there is no valid result yet (zero price or an error), or
+     * - the input is identical to the last saved one.
      */
     fun simpanRiwayat() {
         val state = uiState
@@ -222,12 +240,13 @@ class CalculatorViewModel(
             hargaAwal = when (state.mode) {
                 CalcMode.HARGA_JUAL -> state.hargaAwal.toLongOrNull() ?: 0L
                 CalcMode.TARGET_HARGA -> h.hargaWajibPasang ?: 0L
+                CalcMode.TARGET_BERSIH -> h.hargaWajibPasang ?: 0L
             },
             diskonPersen = when (state.mode) {
                 CalcMode.HARGA_JUAL -> state.diskonPersenHargaJual.toIntOrNull() ?: 0
                 CalcMode.TARGET_HARGA -> state.diskonPersen.toIntOrNull() ?: 0
+                CalcMode.TARGET_BERSIH -> state.diskonPersenBersih.toIntOrNull() ?: 0
             },
-            // Hardcode 4.5% — tidak ambil dari state lagi
             promoXtraPersen = 4.5,
             promoXtraAktif = promoXtraAktif(state),
             pakaiShippingSaver = state.pakaiShippingSaver,
@@ -240,20 +259,22 @@ class CalculatorViewModel(
             totalPotongan = h.totalPotongan,
             penghasilanBersih = h.penghasilanBersih,
             hargaWajibPasang = h.hargaWajibPasang,
-            hargaSetelahDiskon = h.hargaSetelahDiskon
+            hargaSetelahDiskon = h.hargaSetelahDiskon,
+            targetBersih = h.targetBersih
         )
         viewModelScope.launch { riwayatRepo.tambah(entri) }
     }
 
-    /** Kunci identitas input (untuk deteksi duplikat). */
+    /** Input identity key, used to detect duplicates. */
     private fun daftarKunci(state: CalculatorUiState): String = listOf(
         state.mode.name,
         state.hargaAwal,
         state.diskonPersenHargaJual,
         state.targetHarga,
         state.diskonPersen,
+        state.targetBersih,
+        state.diskonPersenBersih,
         state.kategoriFee.name,
-        // REMOVED: state.promoXtraPersen — sudah fixed 4.5%
         pakaiPromoXtraFlags(state),
         state.pakaiShippingSaver.toString()
     ).joinToString("|")
@@ -261,20 +282,22 @@ class CalculatorViewModel(
     private fun pakaiPromoXtraFlags(state: CalculatorUiState): String = when (state.mode) {
         CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual.toString()
         CalcMode.TARGET_HARGA -> state.pakaiPromoXtraTarget.toString()
+        CalcMode.TARGET_BERSIH -> state.pakaiPromoXtraBersih.toString()
     }
 
-    // ── Perhitungan ──────────────────────────────────────────
+    // Calculation
 
-    /** Promo XTRA aktif kalau toggle di mode terkait ON. Persennya fixed 4,5%. */
+    /** Promo XTRA is active when the mode toggle is ON. Rate is fixed at 4.5%. */
     private fun promoXtraAktif(state: CalculatorUiState): Boolean = when (state.mode) {
         CalcMode.HARGA_JUAL -> state.pakaiPromoXtraHargaJual
         CalcMode.TARGET_HARGA -> state.pakaiPromoXtraTarget
+        CalcMode.TARGET_BERSIH -> state.pakaiPromoXtraBersih
     }
 
-    /** Hitung [state] dan kembalikan salinannya yang sudah berisi hasil. */
+    /** Calculate [state] and return a copy with the result. */
     private fun hitung(state: CalculatorUiState): CalculatorUiState {
         val kategori = state.kategoriFee
-        // Hardcode 4.5% jika toggle ON, otherwise 0
+        // Fixed 4.5% when the toggle is ON, otherwise 0.
         val promoPersen = if (promoXtraAktif(state)) 4.5 else 0.0
 
         return when (state.mode) {
@@ -307,6 +330,28 @@ class CalculatorViewModel(
                 )
                 if (hasil == null) {
                     state.copy(pesanError = "Diskon tidak boleh 100% atau lebih")
+                } else {
+                    state.copy(hasil = hasil, pesanError = null)
+                }
+            }
+
+            CalcMode.TARGET_BERSIH -> {
+                val target = state.targetBersih.toLongOrNull() ?: 0L
+                val diskon = state.diskonPersenBersih.toIntOrNull() ?: 0
+                val hasil = CalculatorEngine.hitungDariTargetBersih(
+                    targetBersih = target,
+                    diskonPersen = diskon,
+                    kategoriFee = kategori,
+                    promoXtraPersen = promoPersen,
+                    pakaiShippingSaver = state.pakaiShippingSaver
+                )
+                if (hasil == null) {
+                    val pesan = if (diskon >= 100) {
+                        "Diskon tidak boleh 100% atau lebih"
+                    } else {
+                        "Target terlalu besar untuk dihitung"
+                    }
+                    state.copy(pesanError = pesan)
                 } else {
                     state.copy(hasil = hasil, pesanError = null)
                 }

@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -16,16 +17,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.TrendingDown
-import androidx.compose.material.icons.automirrored.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.Calculate
-import androidx.compose.material.icons.outlined.LocalShipping
-import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Percent
-import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material.icons.outlined.RestartAlt
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,11 +46,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marketcalculator.BuildConfig
 import com.example.marketcalculator.data.CalcMode
-import com.example.marketcalculator.data.HasilKalkulasi
 import com.example.marketcalculator.data.KategoriFee
 import com.example.marketcalculator.data.formatPersen
 import com.example.marketcalculator.ui.theme.tabularNums
@@ -66,9 +62,7 @@ import com.example.marketcalculator.ui.util.formatRupiah
 fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
     val uiState = viewModel.uiState
 
-    // Lacak berapa field yang sedang fokus. Saat jumlahnya turun ke 0
-    // (keyboard ditutup / user ketuk di luar), perhitungan dianggap SELESAI
-    // lalu disimpan ke riwayat.
+    // Track focused input fields. When count drops to zero (keyboard closed / tap outside), calculation is considered done and saved to history.
     val jumlahFokus = remember { mutableStateOf(0) }
     val onFokusBerubah: (Boolean) -> Unit = { fokus ->
         val baru = (jumlahFokus.value + if (fokus) 1 else -1).coerceAtLeast(0)
@@ -89,27 +83,21 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                 .navigationBarsPadding()
                 .imePadding()
         ) {
-            // ── Header ──
+            // Header
             HeaderSection()
 
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // ── Section Label: Pilih Mode ──
-                SectionLabel(
-                    icon = Icons.Outlined.Calculate,
-                    title = "Pilih Mode Kalkulasi"
-                )
-
-                // ── Tab Selector (pill-style) ──
+                // Tab selector (pill style)
                 ModeSelector(mode = uiState.mode, onModeChange = viewModel::onModeChange)
 
-                // ── Form Section dengan Animasi ──
+                // Single form card: input + Shopee costs (design board alignment)
                 AnimatedContent(
                     targetState = uiState.mode,
                     transitionSpec = {
-                        val dir = if (targetState == CalcMode.TARGET_HARGA) 1 else -1
+                        val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
                         (slideInHorizontally(tween(250)) { w -> dir * w / 3 } + fadeIn(tween(250)))
                             .togetherWith(
                                 slideOutHorizontally(tween(200)) { w -> -dir * w / 3 } + fadeOut(tween(150))
@@ -117,58 +105,73 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     },
                     label = "mode_transition"
                 ) { mode ->
+                    val promoAktif = when (mode) {
+                        CalcMode.HARGA_JUAL -> uiState.pakaiPromoXtraHargaJual
+                        CalcMode.TARGET_HARGA -> uiState.pakaiPromoXtraTarget
+                        CalcMode.TARGET_BERSIH -> uiState.pakaiPromoXtraBersih
+                    }
                     when (mode) {
-                        CalcMode.HARGA_JUAL -> HargaJualForm(
-                            hargaAwal = uiState.hargaAwal,
-                            onHargaAwalChange = viewModel::onHargaAwalChange,
+                        CalcMode.HARGA_JUAL -> KalkulatorFormCard(
+                            judul = "Harga Produk",
+                            labelField = "Harga Sebelum Diskon",
+                            helperField = "Harga pasang sebelum voucher toko",
+                            nilai = uiState.hargaAwal,
+                            onNilaiChange = viewModel::onHargaAwalChange,
                             diskonPersen = uiState.diskonPersenHargaJual,
                             onDiskonChange = viewModel::onDiskonHargaJualChange,
                             pesanError = uiState.pesanError,
-                            onFokusBerubah = onFokusBerubah
+                            onFokusBerubah = onFokusBerubah,
+                            kategori = uiState.kategoriFee,
+                            onKategoriChange = viewModel::onKategoriChange,
+                            promoXtraAktif = promoAktif,
+                            onPromoXtraToggle = viewModel::onPromoXtraToggle,
+                            pakaiShippingSaver = uiState.pakaiShippingSaver,
+                            onShippingSaverToggle = viewModel::onShippingSaverToggle
                         )
-                        CalcMode.TARGET_HARGA -> TargetHargaForm(
-                            targetHarga = uiState.targetHarga,
-                            onTargetHargaChange = viewModel::onTargetHargaChange,
+                        CalcMode.TARGET_HARGA -> KalkulatorFormCard(
+                            judul = "Target Pembeli",
+                            labelField = "Harga Dibayar Pembeli",
+                            helperField = "Harga setelah voucher, sebelum potongan Shopee",
+                            nilai = uiState.targetHarga,
+                            onNilaiChange = viewModel::onTargetHargaChange,
                             diskonPersen = uiState.diskonPersen,
                             onDiskonChange = viewModel::onDiskonChange,
                             pesanError = uiState.pesanError,
-                            onFokusBerubah = onFokusBerubah
+                            onFokusBerubah = onFokusBerubah,
+                            kategori = uiState.kategoriFee,
+                            onKategoriChange = viewModel::onKategoriChange,
+                            promoXtraAktif = promoAktif,
+                            onPromoXtraToggle = viewModel::onPromoXtraToggle,
+                            pakaiShippingSaver = uiState.pakaiShippingSaver,
+                            onShippingSaverToggle = viewModel::onShippingSaverToggle
+                        )
+                        CalcMode.TARGET_BERSIH -> KalkulatorFormCard(
+                            judul = "Target Penghasilan",
+                            labelField = "Penghasilan Bersih Diinginkan",
+                            helperField = "Target yang diterima setelah semua potongan",
+                            nilai = uiState.targetBersih,
+                            onNilaiChange = viewModel::onTargetBersihChange,
+                            diskonPersen = uiState.diskonPersenBersih,
+                            onDiskonChange = viewModel::onDiskonBersihChange,
+                            pesanError = uiState.pesanError,
+                            onFokusBerubah = onFokusBerubah,
+                            kategori = uiState.kategoriFee,
+                            onKategoriChange = viewModel::onKategoriChange,
+                            promoXtraAktif = promoAktif,
+                            onPromoXtraToggle = viewModel::onPromoXtraToggle,
+                            pakaiShippingSaver = uiState.pakaiShippingSaver,
+                            onShippingSaverToggle = viewModel::onShippingSaverToggle
                         )
                     }
                 }
 
-                // ── Section Label: Kategori & Biaya Tambahan ──
-                SectionLabel(
-                    icon = Icons.Outlined.Storefront,
-                    title = "Kategori & Biaya Tambahan"
-                )
-
-                BiayaTambahanCard(
-                    kategori = uiState.kategoriFee,
-                    onKategoriChange = viewModel::onKategoriChange,
-                    promoXtraAktif = if (uiState.mode == CalcMode.HARGA_JUAL)
-                        uiState.pakaiPromoXtraHargaJual
-                    else
-                        uiState.pakaiPromoXtraTarget,
-                    onPromoXtraToggle = viewModel::onPromoXtraToggle,
-                    pakaiShippingSaver = uiState.pakaiShippingSaver,
-                    onShippingSaverToggle = viewModel::onShippingSaverToggle,
-                    onFokusBerubah = onFokusBerubah
-                )
-
-                // ── Section Label: Hasil ──
-                SectionLabel(
-                    icon = Icons.Outlined.Receipt,
-                    title = "Hasil Kalkulasi"
-                )
-
-                // ── Ringkasan Hasil ──
+                // Result summary
                 RingkasanCard(
-                    hasil = uiState.hasil,
+                    state = uiState,
                     onReset = viewModel::onReset
                 )
 
-                // ── Riwayat Perhitungan ──
+                // History
                 val daftarRiwayat by viewModel.riwayat.collectAsStateWithLifecycle()
                 RiwayatSection(
                     daftar = daftarRiwayat,
@@ -177,7 +180,7 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
                     onHapusSemua = viewModel::hapusSemuaRiwayat
                 )
 
-                // ── Versi app (dari BuildConfig, otomatis dari build.gradle) ──
+                // App version (from BuildConfig)
                 VersionFooter()
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -186,35 +189,7 @@ fun CalculatorScreen(viewModel: CalculatorViewModel = viewModel()) {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// SECTION LABEL
-// ═══════════════════════════════════════════════════════════
-
-@Composable
-private fun SectionLabel(icon: ImageVector, title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════
-// HEADER
-// ═══════════════════════════════════════════════════════════
+// Header
 
 @Composable
 private fun HeaderSection() {
@@ -222,10 +197,9 @@ private fun HeaderSection() {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp)
+            .padding(horizontal = 20.dp, vertical = 20.dp)
             .statusBarsPadding()
     ) {
-        // Ikon bulat sederhana (tanpa double ring / gradient)
         Box(
             modifier = Modifier
                 .size(44.dp)
@@ -233,90 +207,90 @@ private fun HeaderSection() {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Storefront,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(24.dp)
+            Text(
+                "Rp",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
         }
-        Spacer(Modifier.width(14.dp))
-        Text(
-            "Kalkulator Seller",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(
+                "Kalkulator Seller",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Hitung profit Shopee sebelum pasang harga",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// TAB SELECTOR (Pill-style, modern)
-// ═══════════════════════════════════════════════════════════
+// Tab selector (pill style)
 
 @Composable
 private fun ModeSelector(mode: CalcMode, onModeChange: (CalcMode) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         PillTab(
             label = "Harga Jual",
-            icon = Icons.Outlined.Payments,
             selected = mode == CalcMode.HARGA_JUAL,
             onClick = { onModeChange(CalcMode.HARGA_JUAL) },
             modifier = Modifier.weight(1f)
         )
         PillTab(
             label = "Target Harga",
-            icon = Icons.Outlined.ShoppingCart,
             selected = mode == CalcMode.TARGET_HARGA,
             onClick = { onModeChange(CalcMode.TARGET_HARGA) },
+            modifier = Modifier.weight(1f)
+        )
+        PillTab(
+            label = "Target Bersih",
+            selected = mode == CalcMode.TARGET_BERSIH,
+            onClick = { onModeChange(CalcMode.TARGET_BERSIH) },
             modifier = Modifier.weight(1f)
         )
     }
 }
 
+/**
+ * Icon-less tab pill, so three labels fit on narrow screens without clipping.
+ */
 @Composable
 private fun PillTab(
     label: String,
-    icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(11.dp),
+        shape = RoundedCornerShape(20.dp),
         color = if (selected)
             MaterialTheme.colorScheme.primary
         else
             Color.Transparent,
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = 44.dp)
             .semantics { semanticsSelected = selected }
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 4.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (selected)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(Modifier.width(6.dp))
             Text(
                 label,
                 style = MaterialTheme.typography.labelLarge,
@@ -324,388 +298,374 @@ private fun PillTab(
                     MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// FORM CARDS
-// ═══════════════════════════════════════════════════════════
+// Form card (input + Shopee costs)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HargaJualForm(
-    hargaAwal: String,
-    onHargaAwalChange: (String) -> Unit,
+private fun KalkulatorFormCard(
+    judul: String,
+    labelField: String,
+    helperField: String,
+    nilai: String,
+    onNilaiChange: (String) -> Unit,
     diskonPersen: String,
     onDiskonChange: (String) -> Unit,
     pesanError: String?,
-    onFokusBerubah: (Boolean) -> Unit
-) {
-    val focusManager = LocalFocusManager.current
-    FormCard(title = "Harga Produk") {
-        RupiahField(
-            label = "Harga Sebelum Diskon",
-            value = hargaAwal,
-            onValueChange = onHargaAwalChange,
-            icon = Icons.Outlined.Payments,
-            onFokusBerubah = onFokusBerubah
-        )
-        OutlinedTextField(
-            value = diskonPersen,
-            onValueChange = onDiskonChange,
-            label = { Text("Voucher Diskon") },
-            leadingIcon = {
-                Icon(
-                    Icons.Outlined.Percent,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            suffix = { Text("%") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { focusManager.clearFocus() }
-            ),
-            isError = pesanError != null,
-            supportingText = {
-                if (pesanError != null) {
-                    Text(
-                        pesanError,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.semantics {
-                            liveRegion = LiveRegionMode.Polite
-                        }
-                    )
-                }
-            },
-            shape = RoundedCornerShape(12.dp),
-            textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { onFokusBerubah(it.isFocused) }
-        )
-    }
-}
-
-@Composable
-private fun TargetHargaForm(
-    targetHarga: String,
-    onTargetHargaChange: (String) -> Unit,
-    diskonPersen: String,
-    onDiskonChange: (String) -> Unit,
-    pesanError: String?,
-    onFokusBerubah: (Boolean) -> Unit
-) {
-    val focusManager = LocalFocusManager.current
-    FormCard(title = "Target Pembeli") {
-        RupiahField(
-            label = "Harga Dibayar Pembeli",
-            value = targetHarga,
-            onValueChange = onTargetHargaChange,
-            icon = Icons.Outlined.ShoppingCart,
-            onFokusBerubah = onFokusBerubah
-        )
-        OutlinedTextField(
-            value = diskonPersen,
-            onValueChange = onDiskonChange,
-            label = { Text("Voucher Diskon") },
-            leadingIcon = {
-                Icon(
-                    Icons.Outlined.Percent,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            suffix = { Text("%") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { focusManager.clearFocus() }
-            ),
-            isError = pesanError != null,
-            supportingText = {
-                if (pesanError != null) {
-                    Text(
-                        pesanError,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.semantics {
-                            liveRegion = LiveRegionMode.Polite
-                        }
-                    )
-                }
-            },
-            shape = RoundedCornerShape(12.dp),
-            textStyle = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { onFokusBerubah(it.isFocused) }
-        )
-    }
-}
-
-@Composable
-private fun FormCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun RupiahField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    icon: ImageVector,
-    onFokusBerubah: (Boolean) -> Unit = {}
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = { new -> onValueChange(new.filter { it.isDigit() }) },
-        label = { Text(label) },
-        leadingIcon = {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-        },
-        prefix = { Text("Rp ") },
-        placeholder = { Text("0") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Next
-        ),
-        visualTransformation = ThousandsSeparatorTransformation(),
-        shape = RoundedCornerShape(12.dp),
-        textStyle = MaterialTheme.typography.titleMedium.tabularNums(),
-        modifier = Modifier
-            .fillMaxWidth()
-            .onFocusChanged { onFokusBerubah(it.isFocused) }
-    )
-}
-
-@Composable
-private fun BiayaTambahanCard(
+    onFokusBerubah: (Boolean) -> Unit,
     kategori: KategoriFee,
     onKategoriChange: (KategoriFee) -> Unit,
     promoXtraAktif: Boolean,
     onPromoXtraToggle: (Boolean) -> Unit,
     pakaiShippingSaver: Boolean,
-    onShippingSaverToggle: (Boolean) -> Unit,
-    onFokusBerubah: (Boolean) -> Unit
+    onShippingSaverToggle: (Boolean) -> Unit
 ) {
-    FormCard(title = "Biaya Shopee") {
-        KategoriDropdown(
-            kategori = kategori,
-            onKategoriChange = onKategoriChange
-        )
+    val focusManager = LocalFocusManager.current
 
-        PromoXtraRow(
-            checked = promoXtraAktif,
-            onCheckedChange = onPromoXtraToggle
-        )
-
-        ToggleRow(
-            checked = pakaiShippingSaver,
-            onCheckedChange = onShippingSaverToggle,
-            icon = Icons.Outlined.LocalShipping,
-            judul = "Shipping Fee Saver",
-            keterangan = "Rp350 per pesanan"
-        )
-    }
-}
-
-/** Baris toggle sederhana: ikon + judul + keterangan opsional + Switch. */
-@Composable
-private fun ToggleRow(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    icon: ImageVector,
-    judul: String,
-    keterangan: String? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (checked) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (checked) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Text(
                 judul,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                fontWeight = FontWeight.Bold
             )
-            if (keterangan != null) {
-                Text(
-                    keterangan,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+
+            RupiahField(
+                label = labelField,
+                helper = helperField,
+                value = nilai,
+                onValueChange = onNilaiChange,
+                onFokusBerubah = onFokusBerubah
+            )
+
+            PersenField(
+                value = diskonPersen,
+                onValueChange = onDiskonChange,
+                pesanError = pesanError,
+                onFokusBerubah = onFokusBerubah,
+                onSelesai = { focusManager.clearFocus() }
+            )
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 0.5.dp,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+
+            BiayaShopeeSection(
+                kategori = kategori,
+                onKategoriChange = onKategoriChange,
+                promoXtraAktif = promoXtraAktif,
+                onPromoXtraToggle = onPromoXtraToggle,
+                pakaiShippingSaver = pakaiShippingSaver,
+                onShippingSaverToggle = onShippingSaverToggle
+            )
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier.scale(0.85f),
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
-            )
+    }
+}
+
+/** Small label above an input box, per the design board. */
+@Composable
+private fun FieldLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    focusedBorderColor = Color.Transparent,
+    unfocusedBorderColor = Color.Transparent,
+    errorBorderColor = MaterialTheme.colorScheme.error
+)
+
+@Composable
+private fun RupiahField(
+    label: String,
+    helper: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    onFokusBerubah: (Boolean) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        FieldLabel(label)
+        OutlinedTextField(
+            value = value,
+            onValueChange = { new -> onValueChange(new.filter { it.isDigit() }) },
+            prefix = { Text("Rp ") },
+            placeholder = { Text("0") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
+            shape = RoundedCornerShape(12.dp),
+            textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            visualTransformation = ThousandsSeparatorTransformation(),
+            colors = fieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFokusBerubah(it.isFocused) }
+        )
+        Text(
+            helper,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
+@Composable
+private fun PersenField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    pesanError: String?,
+    onFokusBerubah: (Boolean) -> Unit,
+    onSelesai: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        FieldLabel("Voucher Diskon")
+        OutlinedTextField(
+            value = value,
+            onValueChange = { new -> onValueChange(new.filter { it.isDigit() }.take(3)) },
+            suffix = {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        "%",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { onSelesai() }),
+            isError = pesanError != null,
+            supportingText = {
+                if (pesanError != null) {
+                    Text(
+                        pesanError,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                        }
+                    )
+                }
+            },
+            shape = RoundedCornerShape(12.dp),
+            textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            colors = fieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFokusBerubah(it.isFocused) }
+        )
+        if (pesanError == null) {
+            Text(
+                "Diskon yang ditanggung Shopee",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// Shopee costs (category + toggles)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun KategoriDropdown(
+private fun BiayaShopeeSection(
     kategori: KategoriFee,
-    onKategoriChange: (KategoriFee) -> Unit
+    onKategoriChange: (KategoriFee) -> Unit,
+    promoXtraAktif: Boolean,
+    onPromoXtraToggle: (Boolean) -> Unit,
+    pakaiShippingSaver: Boolean,
+    onShippingSaverToggle: (Boolean) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var sheetTerbuka by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = kategori.label,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Kategori Produk") },
-            leadingIcon = {
-                Icon(
-                    Icons.Outlined.Storefront,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            suffix = { Text("${formatPersen(kategori.persen)}") },
-            supportingText = { Text(kategori.contoh, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            shape = RoundedCornerShape(12.dp),
-            textStyle = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+    KategoriRow(kategori = kategori, onKlik = { sheetTerbuka = true })
+
+    BiayaToggleRow(
+        checked = promoXtraAktif,
+        onCheckedChange = onPromoXtraToggle,
+        judul = "Promo XTRA",
+        keterangan = "4,5% (maks. Rp60.000)",
+        ikon = Icons.Outlined.Percent
+    )
+
+    BiayaToggleRow(
+        checked = pakaiShippingSaver,
+        onCheckedChange = onShippingSaverToggle,
+        judul = "Shipping Fee Saver",
+        keterangan = "Rp350 per pesanan",
+        ikonTeks = "Rp"
+    )
+
+    if (sheetTerbuka) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { sheetTerbuka = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ) {
-            KategoriFee.entries.forEach { item ->
-                DropdownMenuItem(
-                    text = {
-                        Column {
-                            Text(
-                                "${item.label}  (${formatPersen(item.persen)})",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                item.contoh,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    },
-                    onClick = {
-                        onKategoriChange(item)
-                        expanded = false
-                    }
-                )
-            }
+            PilihKategoriSheet(
+                kategori = kategori,
+                onPilih = {
+                    onKategoriChange(it)
+                    sheetTerbuka = false
+                },
+                onTutup = { sheetTerbuka = false }
+            )
+        }
+    }
+}
+
+/** Small icon bubble in front of cost rows. */
+@Composable
+private fun IkonBulat(
+    container: Color,
+    warna: Color,
+    ikon: ImageVector? = null,
+    teks: String? = null
+) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(container),
+        contentAlignment = Alignment.Center
+    ) {
+        if (ikon != null) {
+            Icon(ikon, contentDescription = null, tint = warna, modifier = Modifier.size(16.dp))
+        } else {
+            Text(
+                teks.orEmpty(),
+                style = MaterialTheme.typography.labelMedium,
+                color = warna,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
 
 @Composable
-private fun PromoXtraRow(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
+private fun KategoriRow(kategori: KategoriFee, onKlik: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (checked)
-                    MaterialTheme.colorScheme.primaryContainer
-                else
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .clickable(onClick = onKlik)
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Percent,
-            contentDescription = null,
-            tint = if (checked)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp)
+        IkonBulat(
+            container = MaterialTheme.colorScheme.primaryContainer,
+            warna = MaterialTheme.colorScheme.primary,
+            ikon = Icons.Outlined.Percent
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                "Promo XTRA",
-                style = MaterialTheme.typography.bodySmall,
+                "Kategori Produk",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                kategori.label,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = RoundedCornerShape(50)
+        ) {
+            Text(
+                formatPersen(kategori.persen),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        }
+        Icon(
+            Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+@Composable
+private fun BiayaToggleRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    judul: String,
+    keterangan: String,
+    ikon: ImageVector? = null,
+    ikonTeks: String? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IkonBulat(
+            container = if (checked) MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerHighest,
+            warna = if (checked) MaterialTheme.colorScheme.secondary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            ikon = ikon,
+            teks = ikonTeks
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                judul,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                "4,5% (maks. Rp60.000)",
+                keterangan,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -715,104 +675,212 @@ private fun PromoXtraRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            modifier = Modifier.scale(0.85f),
+            modifier = Modifier.scale(0.8f),
             colors = SwitchDefaults.colors(
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                checkedThumbColor = Color.White,
+                checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant,
+                uncheckedBorderColor = Color.Transparent
             )
         )
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// RINGKASAN CARD
-// ═══════════════════════════════════════════════════════════
+@Composable
+private fun PilihKategoriSheet(
+    kategori: KategoriFee,
+    onPilih: (KategoriFee) -> Unit,
+    onTutup: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                "Pilih Kategori",
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(vertical = 6.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .clickable(onClick = onTutup),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = "Tutup",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        Text(
+            "Biaya admin mengikuti kategori produk",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(12.dp))
+
+        KategoriFee.entries.forEach { item ->
+            val dipilih = item == kategori
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (dipilih) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                    )
+                    .clickable { onPilih(item) }
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IkonBulat(
+                    container = if (dipilih) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    warna = if (dipilih) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    ikon = Icons.Outlined.Percent
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    item.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(
+                    color = if (dipilih) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text(
+                        formatPersen(item.persen),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (dipilih) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+                if (dipilih) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        Icons.Outlined.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Result card
 
 @Composable
 private fun RingkasanCard(
-    hasil: HasilKalkulasi,
+    state: CalculatorUiState,
     onReset: () -> Unit
 ) {
-    val kosong = hasil.totalPotongan == 0L && hasil.penghasilanBersih == 0L &&
-        hasil.hargaWajibPasang == null && hasil.hargaSetelahDiskon == null
+    val hasil = state.hasil
+    val kosong = hasil.hargaWajibPasang == null &&
+        hasil.hargaSetelahDiskon == null &&
+        hasil.totalPotongan == 0L
 
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            if (kosong) {
-                EmptyHasil()
-            } else {
-                // Hasil utama (harga wajib pasang / harga dibayar pembeli)
-                HasilUtamaPanel(hasil)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 60.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (kosong) {
+                    EmptyHasil()
+                } else {
+                    HasilUtama(state)
 
-                Text(
-                    "Rincian Potongan",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
 
-                DetailRow(
-                    label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
-                    amount = hasil.commissionFee
-                )
-                DetailRow(
-                    label = "Biaya Proses Pesanan",
-                    amount = hasil.prosesFee
-                )
-                if (hasil.promoXtraFee > 0) {
-                    DetailRow(label = "Promo XTRA", amount = hasil.promoXtraFee)
+                    Text(
+                        "Rincian Potongan",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    DetailRow(
+                        label = "Biaya Admin (${formatPersen(hasil.persenFeeAktif)})",
+                        amount = hasil.commissionFee
+                    )
+                    DetailRow(
+                        label = "Biaya Proses Pesanan",
+                        amount = hasil.prosesFee
+                    )
+                    if (hasil.promoXtraFee > 0) {
+                        DetailRow(label = "Promo XTRA", amount = hasil.promoXtraFee)
+                    }
+                    if (hasil.shippingSaverFee > 0) {
+                        DetailRow(label = "Shipping Fee Saver", amount = hasil.shippingSaverFee)
+                    }
+                    if (hasil.premiumFee > 0) {
+                        DetailRow(label = "PPh 22 / WHT 22 (0,5%)", amount = hasil.premiumFee)
+                    }
+
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+
+                    DetailRow(
+                        label = "Total Potongan",
+                        amount = hasil.totalPotongan,
+                        bold = true
+                    )
                 }
-                if (hasil.shippingSaverFee > 0) {
-                    DetailRow(label = "Shipping Fee Saver", amount = hasil.shippingSaverFee)
-                }
-                if (hasil.premiumFee > 0) {
-                    DetailRow(label = "PPh 22 / WHT 22 (0,5%)", amount = hasil.premiumFee)
-                }
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    thickness = 0.5.dp
-                )
-
-                DetailRow(
-                    label = "Total Potongan",
-                    amount = hasil.totalPotongan,
-                    bold = true
-                )
-
-                Spacer(Modifier.height(2.dp))
-
-                PenghasilanPanel(hasil.penghasilanBersih)
             }
 
-            Spacer(Modifier.height(2.dp))
-
-            // Reset — selalu terlihat, tidak perlu scroll jauh
-            OutlinedButton(
+            SmallFloatingActionButton(
                 onClick = onReset,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true)
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp)
             ) {
                 Icon(
-                    Icons.Outlined.RestartAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    Icons.Outlined.Refresh,
+                    contentDescription = "Reset kalkulator",
+                    modifier = Modifier.size(20.dp)
                 )
-                Spacer(Modifier.width(6.dp))
-                Text("Reset Kalkulator", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -823,15 +891,23 @@ private fun EmptyHasil() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 20.dp),
+            .padding(vertical = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Calculate,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(32.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "=",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
+            )
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             "Isi harga di atas",
@@ -841,7 +917,7 @@ private fun EmptyHasil() {
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            "Hasil dan rincian potongan akan muncul di sini.",
+            "Hasil dan rincian potongan muncul di sini.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -849,43 +925,94 @@ private fun EmptyHasil() {
     }
 }
 
+/**
+ * Main result panel per mode. Panel color follows the design board:
+ * green for net income, orange for the required listed price.
+ */
 @Composable
-private fun HasilUtamaPanel(hasil: HasilKalkulasi) {
-    when {
-        hasil.hargaWajibPasang != null -> {
-            NilaiPanel(
+private fun HasilUtama(state: CalculatorUiState) {
+    val hasil = state.hasil
+    when (state.mode) {
+        CalcMode.HARGA_JUAL -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val rugi = hasil.penghasilanBersih < 0
+            PanelUtama(
+                label = if (rugi) "Rugi — hasil di bawah nol" else "Penghasilan bersih",
+                nilai = formatRupiah(hasil.penghasilanBersih),
+                sub = "Dari ${formatRupiah(state.hargaAwal.toLongOrNull() ?: 0L)} setelah potongan",
+                nilaiColor = if (rugi) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.secondary,
+                container = if (rugi) MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.secondaryContainer
+            )
+            hasil.hargaSetelahDiskon?.let {
+                InfoRow(
+                    label = "Harga setelah diskon ${state.diskonPersenHargaJual}%",
+                    nilai = formatRupiah(it)
+                )
+            }
+        }
+
+        CalcMode.TARGET_HARGA -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            PanelUtama(
                 label = "Harga wajib pasang di Shopee",
-                nilai = formatRupiah(hasil.hargaWajibPasang),
-                warna = MaterialTheme.colorScheme.primary,
-                icon = Icons.Outlined.Storefront,
-                container = MaterialTheme.colorScheme.primaryContainer,
-                onContainer = MaterialTheme.colorScheme.onPrimaryContainer
+                nilai = formatRupiah(hasil.hargaWajibPasang ?: 0L),
+                sub = "Agar pembeli membayar ${formatRupiah(state.targetHarga.toLongOrNull() ?: 0L)} setelah diskon",
+                nilaiColor = MaterialTheme.colorScheme.primary,
+                container = MaterialTheme.colorScheme.primaryContainer
+            )
+            InfoRow(
+                label = "Harga yang dibayar pembeli",
+                nilai = formatRupiah(state.targetHarga.toLongOrNull() ?: 0L)
             )
         }
-        hasil.hargaSetelahDiskon != null -> {
-            NilaiPanel(
-                label = "Harga yang dibayar pembeli",
-                nilai = formatRupiah(hasil.hargaSetelahDiskon),
-                warna = MaterialTheme.colorScheme.tertiary,
-                icon = Icons.Outlined.ShoppingCart,
-                container = MaterialTheme.colorScheme.surfaceContainerHigh,
-                onContainer = MaterialTheme.colorScheme.onSurface
+
+        CalcMode.TARGET_BERSIH -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            PanelUtama(
+                label = "Penghasilan bersih",
+                nilai = formatRupiah(hasil.penghasilanBersih),
+                sub = "Target yang ingin kamu terima",
+                nilaiColor = MaterialTheme.colorScheme.secondary,
+                container = MaterialTheme.colorScheme.secondaryContainer
             )
+            InfoRow(
+                label = "Harga wajib pasang di Shopee",
+                nilai = formatRupiah(hasil.hargaWajibPasang ?: 0L),
+                warnaNilai = MaterialTheme.colorScheme.primary
+            )
+            InfoRow(
+                label = "Harga setelah diskon ${hasil.diskonPersenDipakai}%",
+                nilai = formatRupiah(hasil.hargaSetelahDiskon ?: 0L)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Diskon yang digunakan",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    formatPersen(hasil.diskonPersenDipakai.toDouble()),
+                    style = MaterialTheme.typography.bodySmall.tabularNums(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
 
-/**
- * Panel nilai (solid tonal, tanpa gradient/border). Dipakai untuk hasil utama.
- */
 @Composable
-private fun NilaiPanel(
+private fun PanelUtama(
     label: String,
     nilai: String,
-    warna: Color,
-    icon: ImageVector,
-    container: Color,
-    onContainer: Color
+    sub: String,
+    nilaiColor: Color,
+    container: Color
 ) {
     Surface(
         color = container,
@@ -894,85 +1021,68 @@ private fun NilaiPanel(
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = warna,
-                    modifier = Modifier.size(16.dp)
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(nilaiColor)
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
                 Text(
                     label,
                     style = MaterialTheme.typography.labelMedium,
-                    color = onContainer
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 nilai,
                 style = MaterialTheme.typography.displayLarge.tabularNums(),
-                color = warna,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
+                color = nilaiColor,
+                fontWeight = FontWeight.Bold
             )
-        }
-    }
-}
-
-/**
- * Panel penghasilan bersih. WAJIB berubah warna saat rugi (negatif) —
- * jangan pernah tampilkan angka negatif dengan warna profit.
- */
-@Composable
-private fun PenghasilanPanel(penghasilan: Long) {
-    val rugi = penghasilan < 0
-    val warna = if (rugi) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
-    val container = if (rugi) MaterialTheme.colorScheme.errorContainer
-    else MaterialTheme.colorScheme.secondaryContainer
-    val onContainer = if (rugi) MaterialTheme.colorScheme.onErrorContainer
-    else MaterialTheme.colorScheme.onSecondaryContainer
-    val icon = if (rugi) Icons.AutoMirrored.Outlined.TrendingDown
-    else Icons.AutoMirrored.Outlined.TrendingUp
-    val label = if (rugi) "RUGI — hasil di bawah nol" else "Penghasilan bersih"
-
-    Surface(
-        color = container,
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = warna,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = onContainer,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
-                formatRupiah(penghasilan),
-                style = MaterialTheme.typography.displayLarge.tabularNums(),
-                color = warna,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
+                sub,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// DETAIL ROW (Baris rincian potongan)
-// ═══════════════════════════════════════════════════════════
+/** Gray info row, e.g. price after discount. */
+@Composable
+private fun InfoRow(
+    label: String,
+    nilai: String,
+    warnaNilai: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            nilai,
+            style = MaterialTheme.typography.bodySmall.tabularNums(),
+            color = warnaNilai,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+// Detail row (cost breakdown)
 
 @Composable
 private fun DetailRow(
@@ -983,14 +1093,15 @@ private fun DetailRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = 1.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (bold) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (bold) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
@@ -1003,9 +1114,7 @@ private fun DetailRow(
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// INFO FOOTER
-// ═══════════════════════════════════════════════════════════
+// Version footer
 
 @Composable
 private fun VersionFooter() {

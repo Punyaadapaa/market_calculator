@@ -6,9 +6,8 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
 /**
- * Nampilin angka mentah (misal "1500000") jadi "1.500.000" di layar,
- * tapi yang kesimpen di state tetap angka polos. Jadi kalkulasi di belakang
- * gak perlu ribet parsing titik lagi.
+ * Shows raw digits ("1500000") as "1.500.000" on screen while the state keeps
+ * the plain digits, so the calculation needs no dot parsing.
  */
 class ThousandsSeparatorTransformation : VisualTransformation {
 

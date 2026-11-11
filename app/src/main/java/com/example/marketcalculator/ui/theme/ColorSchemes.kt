@@ -3,19 +3,17 @@ package com.example.marketcalculator.ui.theme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 
-/**
- * Skema warna dark — netral ala GitHub-dark dengan aksen amber hangat.
- */
+/** Dark theme palette — GitHub-style dark with warm amber accent. */
 val KalkulatorDarkColorScheme = darkColorScheme(
     primary = PrimaryOrange,
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
     onPrimaryContainer = OnPrimaryContainerDark,
 
-    secondary = ProfitGreen,
-    onSecondary = OnProfitGreen,
-    secondaryContainer = ProfitGreenContainer,
-    onSecondaryContainer = OnProfitGreenContainer,
+    secondary = ProfitTeal,
+    onSecondary = OnProfitTeal,
+    secondaryContainer = ProfitTealContainer,
+    onSecondaryContainer = OnProfitTealContainer,
 
     tertiary = AccentBlue,
 
@@ -41,19 +39,16 @@ val KalkulatorDarkColorScheme = darkColorScheme(
     onErrorContainer = OnErrorContainerDark
 )
 
-/**
- * Skema warna light — netral terang dengan aksen hangat yang sama.
- * Semua pasangan teks/latar memenuhi kontras WCAG AA.
- */
+/** Light theme palette — neutral bright with the same warm accent, WCAG AA contrast. */
 val KalkulatorLightColorScheme = lightColorScheme(
     primary = PrimaryOrangeLightTheme,
     onPrimary = OnPrimaryLightTheme,
     primaryContainer = PrimaryOrangeLightThemeCont,
     onPrimaryContainer = OnPrimaryContainerLight,
 
-    secondary = ProfitGreenLight,
-    onSecondary = OnProfitGreenLight,
-    secondaryContainer = ProfitGreenContainerLight,
+    secondary = ProfitTealLight,
+    onSecondary = OnProfitTealLight,
+    secondaryContainer = ProfitTealContainerLight,
     onSecondaryContainer = OnProfitContainerLight,
 
     tertiary = AccentBlueLight,

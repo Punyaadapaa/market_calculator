@@ -13,10 +13,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 /**
- * @param darkTheme    true = skema gelap. Default mengikuti setelan sistem.
- * @param dynamicColor true = pakai Dynamic Color (Material You) bila didukung
- *                     Android 12+ (API 31). DEFAULT false supaya warna brand
- *                     (Shopee Orange #EE4D2D) konsisten di semua perangkat.
+ * @param darkTheme    true for the dark scheme, defaults to the system setting.
+ * @param dynamicColor true to use Material You dynamic color on Android 12+
+ *                     (API 31). Defaults to false so the brand orange stays
+ *                     consistent on every device.
  */
 @Composable
 fun KalkulatorSellerTheme(
@@ -34,14 +34,14 @@ fun KalkulatorSellerTheme(
         else -> KalkulatorLightColorScheme
     }
 
-    // Atur keterbacaan ikon status/navigation bar. Warna bar tidak di-set manual
-    // (deprecated di AGP baru) — edge-to-edge + ikon kontras sudah cukup.
+    // Keep status and navigation bar icons readable. Bar colors are not set
+    // manually (deprecated in newer AGP); edge-to-edge plus contrast icons is enough.
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             val controller = WindowCompat.getInsetsController(window, view)
-            // Di skema terang, ikon bar harus gelap (appearanceLight = true).
+            // Light scheme needs dark bar icons (appearanceLight = true).
             controller.isAppearanceLightStatusBars = !darkTheme
             controller.isAppearanceLightNavigationBars = !darkTheme
         }

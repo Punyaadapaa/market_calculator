@@ -3,27 +3,26 @@ package com.example.marketcalculator.data
 import kotlinx.serialization.Serializable
 
 /**
- * Satu catatan perhitungan yang disimpan ke riwayat.
+ * One saved calculation.
  *
- * Menyimpan input + hasil pada saat dihitung, supaya bisa ditampilkan lengkap
- * dan dimuat ulang ke kalkulator kapan saja (tanpa menghitung ulang dari tarif
- * yang mungkin sudah berubah).
+ * Stores the input and result at calculation time, so the entry can be shown
+ * in full and reloaded into the calculator later even if rates change.
  */
 @Serializable
 data class RiwayatEntri(
-    /** Epoch millis saat entri dibuat (dipakai juga sebagai id unik). */
+    /** Creation time in epoch millis, also used as the unique id. */
     val id: Long,
     val mode: String,                 // CalcMode.name
     val kategoriNama: String,         // KategoriFee.label
 
-    // Input yang relevan (disimpan sebagai teks apa adanya)
+    // Relevant input, stored as-is
     val hargaAwal: Long,
     val diskonPersen: Int,
     val promoXtraPersen: Double,
     val promoXtraAktif: Boolean,
     val pakaiShippingSaver: Boolean = false,
 
-    // Ringkasan hasil saat dihitung
+    // Result summary at calculation time
     val persenFee: Double,
     val commissionFee: Long,
     val prosesFee: Long,
@@ -33,5 +32,7 @@ data class RiwayatEntri(
     val totalPotongan: Long,
     val penghasilanBersih: Long,
     val hargaWajibPasang: Long? = null,
-    val hargaSetelahDiskon: Long? = null
+    val hargaSetelahDiskon: Long? = null,
+    /** Desired net income input, Target Bersih mode only. */
+    val targetBersih: Long? = null
 )

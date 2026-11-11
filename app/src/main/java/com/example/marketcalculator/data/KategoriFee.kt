@@ -1,18 +1,17 @@
 package com.example.marketcalculator.data
 
 /**
- * 9 tier Biaya Administrasi Shopee (Penjual Non-Star, Star & Star+).
+ * Shopee admin fee tiers (non-star, star, and star+ sellers).
  *
- * Sumber RESMI: seller.shopee.co.id/edu/article/15965
- * ("Rincian Biaya Penjual Shopee per Kategori Produk", versi 30-07-2026).
- * Tarif final: 10,00% / 9,50% / 9,00% / 8,25% / 6,75% / 6,50% / 5,25% / 4,25% / 2,50%.
+ * Official source: seller.shopee.co.id/edu/article/15965, article version 30-07-2026.
+ * Final rates: 10.00 / 9.50 / 9.00 / 8.25 / 6.75 / 6.50 / 5.25 / 4.25 / 2.50 percent.
  *
- * Dasar perhitungan = harga SEBELUM diskon (harga before) saat voucher
- * ditanggung Shopee, karena voucher itu tidak mengurangi harga dari sisi
- * penjual. (Kalau voucher ditanggung PENJUAL, barulah dikurangi dulu.)
+ * Fees use the price before discount when the voucher is Shopee funded, since
+ * that voucher does not reduce the seller's price. If the voucher is seller
+ * funded, deduct it first.
  *
- * Catatan: Shopee Mall punya skema terpisah (2,50%–11,70%). Tier di sini untuk
- * penjual reguler. Persen bisa berubah sewaktu-waktu — sesuaikan bila ada update.
+ * Shopee Mall uses a separate scheme (2.50 to 11.70 percent). These tiers are
+ * for regular sellers. Rates can change, update when Shopee does.
  */
 enum class KategoriFee(
     val label: String,
@@ -70,21 +69,21 @@ enum class KategoriFee(
         10.00
     );
 
-    /** Label + contoh produk untuk ditampilkan di dropdown. */
+    /** Label with product examples for the dropdown. */
     val labelLengkap: String
         get() = "$label — ${formatPersen(persen)}"
 
     companion object {
-        /** Tier default (paling netral di tengah range). */
+        /** Default tier, the middle of the range. */
         val default: KategoriFee = FASHION_BAWAH
 
-        /** Ambil kategori dari label; fallback ke [default] bila tidak ketemu. */
+        /** Look up a category by label, falling back to [default]. */
         fun dariLabel(label: String): KategoriFee =
             entries.firstOrNull { it.label == label } ?: default
     }
 }
 
-/** Format persen ala Indonesia: 8.25 -> "8,25%; 10.00 -> "10%" */
+/** Indonesian percent format: 8.25 becomes "8,25%", 10.00 becomes "10%". */
 internal fun formatPersen(persen: Double): String {
     val teks = if (persen % 1.0 == 0.0) {
         persen.toInt().toString()

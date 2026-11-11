@@ -6,9 +6,9 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * Ubah epoch millis jadi waktu relatif singkat dalam Bahasa Indonesia,
- * mis. "Baru saja", "5 menit lalu", "3 jam lalu", "2 hari lalu".
- * Untuk yang lebih lama (> 7 hari) tampilkan tanggal "12 Feb 2026".
+ * Converts epoch millis into a short relative time in Indonesian,
+ * e.g. "Baru saja", "5 menit lalu", "3 jam lalu", "2 hari lalu".
+ * Anything older than 7 days shows as a date, e.g. "12 Feb 2026".
  */
 fun waktuRelatif(epochMillis: Long, sekarang: Long = System.currentTimeMillis()): String {
     val selisih = sekarang - epochMillis
